@@ -1,117 +1,131 @@
 browser:
-  path: ""
+  path: ""  # ex) "/usr/bin/google-chrome"
 universal:
   about_me:
     authorized_to_work_in_us: true
     military_veteran: false
     willing_to_relocate: true
     name:
-      first: ""
-      last: ""
+      first: "" # ex) "John"
+      last: ""  # ex) "Smith"
     contact:
-      email_address: ""
-      phone_number: ""
+      email_address: "" # ex) "john.smith@gmail.com"
+      phone_number: ""  # ex) "1238674309"
     location:
-      city: ""
-      country: ""
-      postal_code: ""
-      state: ""
-      state_code: ""
-      street_address: ""
+      city: ""  # ex) "Dallas"
+      country: "" # ex) "United States"
+      postal_code: 00000 # ex) 12345
+      state: "" # ex) "Texas"
+      state_code: ""  # ex) "TX"
+      street_address: ""  # ex) "12345 Some St"
     work_experience:
-      - title: ""
-        company: ""
+      - title: "" # ex) "Software Engineer"
+        company: "" # ex) "Amazon"
         currently_work_here: false
         start:
-          day_of_month: 00
-          month: 00
-          year: 0000
+          day_of_month: 00  # ex) 25
+          month: 00 # ex) 12
+          year: 0000  # ex) 2023
         end:
-          day_of_month: 00
-          month: 00
-          year: 0000
-      - title: ""
-        company: ""
+          day_of_month: 00  # ex) 25
+          month: 00 # ex) 12
+          year: 0000  # ex) 2024
+      - title: "" # ex) "Software Engineer"
+        company: "" # ex) "Amazon"
         currently_work_here: false
         start:
-          day_of_month: 00
-          month: 00
-          year: 0000
+          day_of_month: 00  # ex) 25
+          month: 00 # ex) 12
+          year: 0000  # ex) 2023
         end:
-          day_of_month: 00
-          month: 00
-          year: 0000
+          day_of_month: 00  # ex) 25
+          month: 00 # ex) 12
+          year: 0000  # ex) 2024
     education:
       degrees:
         - currently_attending: false
-          school: ""
-          city: ""
-          state: ""   # Full state name, no abbrieviations: ex) Utah
-          country: ""   # Full country name, no abbrieviations: ex) United States
-          degree_type: ""   # ex) Bachelor of Science
-          field_of_study: ""  # ex) Computer Science
-          start:
-            day_of_month: 00
-            month: 00
-            year: 0000
-          end:
-            day_of_month: 00
-            month: 00
-            year: 0000
-        - currently_attending: false
-          school: ""
-          city: ""
+          school: ""  # ex) "Western Governor's University"
+          city: ""  # ex) "Salt Lake City"
           state: ""   # ex) "Utah"
           country: ""   # ex) "United States"
           degree_type: ""   # ex) "Bachelor's Degree"
           field_of_study: ""  # ex) "Computer Science"
           start:
-            day_of_month: 00
-            month: 00
-            year: 0000
+            day_of_month: 00  # ex) 25
+            month: 00 # ex) 12
+            year: 0000  # ex) 2020
           end:
-            day_of_month: 00
-            month: 00
-            year: 0000
+            day_of_month: 00  # ex) 25
+            month: 00 # ex) 12
+            year: 0000  # ex) 2024
+        - currently_attending: false
+          school: ""  # ex) "Western Governor's University"
+          city: ""  # ex) "Salt Lake City"
+          state: ""   # ex) "Utah"
+          country: ""   # ex) "United States"
+          degree_type: ""   # ex) "Bachelor's Degree"
+          field_of_study: ""  # ex) "Computer Science"
+          start:
+            day_of_month: 00  # ex) 25
+            month: 00 # ex) 12
+            year: 0000  # ex) 2020
+          end:
+            day_of_month: 00  # ex) 25
+            month: 00 # ex) 12
+            year: 0000  # ex) 2024
     links:
       github: ""  # ex) "https://github.com/torvalds"
   bot_behavior:
-    pause_every_x_jobs: 50
+    pause_every_x_jobs: 50  # Recommended default
     ignore:
       companies: []
+        # - "Amazon"
+        # - "Walmart"
       descriptions: []
+        # - "10+ years of experience"
+        # - "travel"
       locations: []
+        # - "Ohio"
+        # - "Hybrid"
       titles: []
+        # - "Customer Support"
+        # - "Mechanic"
   search:
     experience:
+      # These can have dramatic affects on search results.
+      # For maximum results, leave all false.
       entry: false
-      mid: true
+      mid: false
       senior: false
     location:
-      city: null
-      max_distance_in_mis: 0
+      city: null  # ex) "New York City" -- Leave null if looking for remote
+      max_distance_in_mis: 0  # ex) 50
       hybrid: false
       remote: true
     salary:
-      min: 30000
-      max: 300000
+      min: 00000  # ex) 50000
+      max: 000000 # ex) 100000
     terms:
+      # These are the keywords that will be fed directly into the search query, use sparingly.
       match: []
+        # - "Python"
+        # - "SQL"
       # These ignore terms will be fed directly into job listing search queries and can have dramatic affects.
       # If unsure, use the universal.bot_behavior.ignore section instead.
       ignore: []
+        # - "Customer Service"
+        # - "COBOL"
     misc:
-      max_age_in_days: 7
-      min_company_rating: 3.0
+      max_age_in_days: 0  # ex) 2
+      min_company_rating: 0.0 # ex) 3.0
 glassdoor:
-  email: ""
-  password: ""
+  email: "" # ex) "john.smith@gmail.com" 
+  password: ""  # ex) "J0hnP@ssword123"
 indeed:
-  email: ""
-  relevant_experience_company: ""
-  relevant_experience_job_title: ""
-  query_url: ""
+  email: "" # ex) "john.smith@gmail.com" 
+  relevant_experience_company: "" # ex) "Amazon"
+  relevant_experience_job_title: "" # ex) "Software Engineer"
 linkedin:
   easy_apply_only: true
-  email: ""
-  password: ""
+  email: "" # ex) "john.smith@gmail.com" 
+  password: ""  # ex) "J0hnP@ssword123"

@@ -2,4 +2,4 @@ __pycache__
 config.yml
 .venv
 test.py
-
+.env

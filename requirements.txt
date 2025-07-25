@@ -1,4 +1,7 @@
+psycopg2-binary==2.9.10
 pyyaml==6.0.2
 python-box==7.3.2
+sqlalchemy==2.0.41
+sqlalchemy2-stubs==0.0.2a38
 undetected-chromedriver==3.5.5
 

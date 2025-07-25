@@ -29,8 +29,8 @@ class IndeedOrchestrationEngine:
     self.__driver = driver
     self.__universal_config = universal_config
     self.__indeed_login_page = IndeedLoginPage(driver, selenium_helper, indeed_config)
-    self.__indeed_one_time_code_page = IndeedOneTimeCodePage(driver, selenium_helper)
-    self.__indeed_job_listings_page = IndeedJobListingsPage(driver, selenium_helper, indeed_config, universal_config)
+    self.__indeed_one_time_code_page = IndeedOneTimeCodePage(driver, selenium_helper, indeed_config)
+    self.__indeed_job_listings_page = IndeedJobListingsPage(driver, selenium_helper, universal_config, indeed_config)
 
   def apply(self) -> None:
     base_url = "https://www.indeed.com"
@@ -40,12 +40,7 @@ class IndeedOrchestrationEngine:
       logging.debug("Waiting for one-time-code page to appear...")
       time.sleep(0.5)
     if self.__indeed_one_time_code_page.can_resolve_with_mail_dot_com():
-      try:
-        self.__indeed_one_time_code_page.resolve_with_mail_dot_com()
-      except Exception:
-        self.__driver.switch_to.window(self.__driver.window_handles[-1])
-        self.__driver.close()
-        self.__driver.switch_to.window(self.__driver.window_handles[0])
+      self.__indeed_one_time_code_page.resolve_with_mail_dot_com()
     self.__indeed_one_time_code_page.wait_for_captcha_resolution()
     self.__go_to_query()
     while not self.__indeed_job_listings_page.is_present():

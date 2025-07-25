@@ -3,42 +3,58 @@ import os
 import time
 import undetected_chromedriver as uc
 from selenium.webdriver.common.by import By
+from models.configs.indeed_config import IndeedConfig
 from models.enums.element_type import ElementType
-from services.orchestration.mail_dot_com_orchestration_engine import MailDotComOrchestrationEngine
+from services.misc.email_handler import EmailHandler
 from services.misc.selenium_helper import SeleniumHelper
 
 
 class IndeedOneTimeCodePage:
   __driver: uc.Chrome
   __selenium_helper: SeleniumHelper
-  __mail_dot_com_orchestration_engine: MailDotComOrchestrationEngine
+  __indeed_config: IndeedConfig
+  __email_handler: EmailHandler
 
-  def __init__(self, driver: uc.Chrome, selenium_helper: SeleniumHelper):
+  def __init__(
+    self,
+    driver: uc.Chrome,
+    selenium_helper: SeleniumHelper,
+    indeed_config: IndeedConfig
+  ):
     self.__driver = driver
     self.__selenium_helper = selenium_helper
-    self.__mail_dot_com_orchestration_engine = MailDotComOrchestrationEngine(driver, selenium_helper)
+    self.__indeed_config = indeed_config
+    self.__email_handler = EmailHandler()
 
   def is_present(self) -> bool:
-    return self.__selenium_helper.exact_text_is_present("Sign in with a code", ElementType.H1)
+    return self.__selenium_helper.exact_text_is_present(
+      "Check your email for a code",
+      ElementType.H1
+    )
 
   def can_resolve_with_mail_dot_com(self) -> bool:
-    email = os.getenv("MAIL_DOT_COM_EMAIL")
-    password = os.getenv("MAIL_DOT_COM_PASS")
-    if email and password:
+    EMAIL = os.getenv("MAIL_DOT_COM_EMAIL")
+    PASSWORD = os.getenv("MAIL_DOT_COM_PASS")
+    MAIL_DOT_COM_IN_EMAIL_ADDRESS = "@mail.com" in self.__indeed_config.email
+    if MAIL_DOT_COM_IN_EMAIL_ADDRESS and EMAIL and PASSWORD:
       return True
     return False
 
   def resolve_with_mail_dot_com(self) -> None:
     assert self.can_resolve_with_mail_dot_com()
-    email = os.getenv("MAIL_DOT_COM_EMAIL")
-    password = os.getenv("MAIL_DOT_COM_PASS")
-    if email and password:
-      code = self.__mail_dot_com_orchestration_engine.get_indeed_one_time_code()
-      self.__driver.switch_to.window(self.__driver.window_handles[0])
-      self.__enter_one_time_code(code)
-      self.__driver.switch_to.window(self.__driver.window_handles[-1])
-      self.__driver.close()
-      self.__driver.switch_to.window(self.__driver.window_handles[0])
+    while True:
+      try:
+        code = self.__email_handler.get_indeed_one_time_code_from_mdc()
+        break
+      except TimeoutError:
+        send_new_code_span = self.__selenium_helper.get_element_by_exact_text(
+          "Send new code",
+          ElementType.SPAN
+        )
+        send_new_code_span.click()
+        time.sleep(1)
+    self.__wait_for_one_time_code_label()
+    self.__enter_one_time_code(code)
 
   def wait_for_captcha_resolution(self) -> None:
     captcha_url = "secure.indeed.com"
@@ -46,8 +62,21 @@ class IndeedOneTimeCodePage:
       logging.debug("Waiting for captcha resolution...")
       time.sleep(0.5)
 
+  def __wait_for_one_time_code_label(self, timeout=10) -> None:
+    start_time = time.time()
+    while time.time() - start_time < timeout:
+      if self.__selenium_helper.text_is_present(
+        "Enter code",
+        ElementType.LABEL
+      ):
+        return
+      logging.debug("Waiting for one-time code label...")
+      time.sleep(0.5)
+
   def __enter_one_time_code(self, code: str) -> None:
-    logging.debug('Waiting for one-time code resolution...')
-    one_time_code_input_id = "passcode-input"
-    one_time_code_input = self.__driver.find_element(By.ID, one_time_code_input_id)
-    self.__selenium_helper.write_to_input(code, one_time_code_input)
+    enter_code_label = self.__selenium_helper.get_element_by_text(
+      "Enter code",
+      ElementType.LABEL
+    )
+    enter_code_input = enter_code_label.find_element(By.XPATH, "../span/input")
+    self.__selenium_helper.write_to_input(code, enter_code_input)

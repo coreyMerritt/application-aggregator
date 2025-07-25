@@ -8,9 +8,8 @@ from selenium.common.exceptions import NoSuchElementException, StaleElementRefer
 from entities.glassdoor_brief_job_listing import GlassdoorBriefJobListing
 from entities.glassdoor_job_listing import GlassdoorJobListing
 from models.enums.element_type import ElementType
-from models.enums.glassdoor_apply_button_type import GlassdoorApplyButtonType
 from models.configs.universal_config import UniversalConfig
-from services.pages.indeed_apply_now_page import IndeedApplyNowPage
+from services.pages.indeed_apply_now_page.indeed_apply_now_page import IndeedApplyNowPage
 from services.misc.selenium_helper import SeleniumHelper
 
 
@@ -19,7 +18,7 @@ class GlassdoorJobListingsPage:
   __selenium_helper: SeleniumHelper
   __universal_config: UniversalConfig
   __indeed_apply_now_page: IndeedApplyNowPage
-  __jobs_applied_to_this_session: List[dict[str, str | None]]
+  __jobs_applied_to_this_session: List[dict[str, str | float | None]]
 
   def __init__(
     self,
@@ -76,7 +75,7 @@ class GlassdoorJobListingsPage:
         continue
       self.__remove_create_job_dialog()
       job_listing_li.click()
-      job_listing = self.__build_job_listing()
+      job_listing = self.__build_job_listing(brief_job_listing)
       if job_listing.should_be_ignored(self.__universal_config):
         continue
       self.__apply_to_selected_job()
@@ -85,17 +84,17 @@ class GlassdoorJobListingsPage:
         print("\nPausing to allow user to handle existing tabs before overload.")
         input("\tPress enter to proceed...")
 
-  def __build_job_listing(self) -> GlassdoorJobListing:
+  def __build_job_listing(self, brief_job_listing: GlassdoorBriefJobListing) -> GlassdoorJobListing:
     job_info_div = self.__get_job_info_div()
     try:
-      job_listing = GlassdoorJobListing(job_info_div)
+      job_listing = GlassdoorJobListing(brief_job_listing, job_info_div)
       return job_listing
     except StaleElementReferenceException:
       if not self.__job_info_div_is_present():
         if self.__page_didnt_load_is_present():
           self.__reload_job_description()
       job_info_div = self.__get_job_info_div()
-      job_listing = GlassdoorJobListing(job_info_div)
+      job_listing = GlassdoorJobListing(brief_job_listing, job_info_div)
       return job_listing
 
   def __job_info_div_is_present(self) -> bool:
@@ -136,7 +135,7 @@ class GlassdoorJobListingsPage:
     if not apply_button:
       return    # Assumes this is a greyed out "Applied" job
     apply_button_text = apply_button.text
-    if apply_button_text.lower().strip() == GlassdoorApplyButtonType.APPLIED.value.lower():
+    if apply_button_text.lower().strip() == "applied":
       return
     if apply_button.is_enabled():
       apply_button.click()
@@ -178,12 +177,12 @@ class GlassdoorJobListingsPage:
     return job_info_div
 
   def __handle_application(self, apply_button_text: str) -> None:
-    if apply_button_text.lower().strip() == GlassdoorApplyButtonType.EASY_APPLY.value.lower():
+    if apply_button_text.lower().strip() == "apply now":
       self.__driver.switch_to.window(self.__driver.window_handles[-1])
       self.__easy_apply()
-    elif apply_button_text.lower().strip() == GlassdoorApplyButtonType.APPLY_ON_EMPLOYER_SITE.value.lower():
+    elif apply_button_text.lower().strip() == "apply on company site":
       self.__driver.switch_to.window(self.__driver.window_handles[0])
-    elif apply_button_text.lower().strip() == GlassdoorApplyButtonType.APPLIED.value.lower():
+    elif apply_button_text.lower().strip() == "applied":
       return
 
   def __easy_apply(self) -> None:

@@ -95,33 +95,21 @@ class IndeedQueryUrlBuilder:
   def __add_remote_if_needed(self) -> None:
     assert "&sc=0kf%3A" in self.__url
     if self.__remote:
-      self.__url += "attr%28DSQF7%29%3B"
+      self.__url += "attr%28DSQF7%29"
 
   def __add_hybrid_if_needed(self) -> None:
     if not self.__remote:
       assert "&sc=0kf%3A" in self.__url
       if self.__hybrid:
-        self.__url += "attr%28PAXZC%29%3B"
-
-  # Keeping this around in case we want it later, but for now indeed's exp system is booty, lets not use it
-  def __add_exp_level_tags_as_needed(self) -> None:     # pylint: disable=unused-private-member
-    assert "&sc=0kf%3A" in self.__url
-    if self.__entry_level and self.__mid_level and self.__senior_level:
-      return
-    if self.__entry_level:
-      self.__url += "explvl%28ENTRY_LEVEL%29"
-    elif self.__mid_level:
-      self.__url += "explvl%28MID_LEVEL%29"
-    elif self.__senior_level:
-      self.__url += "explvl%28SENIOR_LEVEL%29"
+        self.__url += "attr%28PAXZC%29"
 
   def __add_post_attributes_tag_if_needed(self) -> None:
-    pre_tag_needed = False
+    post_tag_needed = False
     if self.__entry_level or self.__mid_level or self.__senior_level:
-      pre_tag_needed = True
+      post_tag_needed = True
     if self.__entry_level and self.__mid_level and self.__senior_level:
-      pre_tag_needed = False
+      post_tag_needed = False
     if self.__remote or self.__hybrid:
-      pre_tag_needed = True
-    if pre_tag_needed:
+      post_tag_needed = True
+    if post_tag_needed:
       self.__url += "%3B"

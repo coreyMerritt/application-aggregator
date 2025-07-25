@@ -5,7 +5,7 @@ from models.configs.glassdoor_config import GlassdoorConfig
 from models.configs.universal_config import UniversalConfig
 from services.query_url_builders.glassdoor_query_url_builder import GlassdoorQueryUrlBuilder
 from services.misc.selenium_helper import SeleniumHelper
-from services.pages.indeed_apply_now_page import IndeedApplyNowPage
+from services.pages.indeed_apply_now_page.indeed_apply_now_page import IndeedApplyNowPage
 from services.pages.glassdoor_login_page import GlassdoorLoginPage
 from services.pages.glassdoor_job_listings_page import GlassdoorJobListingsPage
 

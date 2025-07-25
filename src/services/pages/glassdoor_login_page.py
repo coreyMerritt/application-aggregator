@@ -51,7 +51,7 @@ class GlassdoorLoginPage:
     password_input_id="inlineUserPassword"
     password = self.__glassdoor_config.password
     password_input = auth_email_form.find_element(By.ID, password_input_id)
-    self.__selenium_helper.write_to_input(password, password_input)
+    self.__selenium_helper.write_to_input(password, password_input, True)
     sign_in_span_text = "Sign in"
     sign_in_span = self.__selenium_helper.get_element_by_exact_text(
       some_text=sign_in_span_text,

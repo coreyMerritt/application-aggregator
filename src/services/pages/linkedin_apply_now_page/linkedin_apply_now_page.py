@@ -124,7 +124,7 @@ class LinkedinApplyNowPage:
         review_button.click()
         return
       except ElementClickInterceptedException:
-        logging.debug("ElementClickInterceptedException... trying again...")
+        logging.debug("ElementClickInterceptedException. Trying again...")
         time.sleep(0.1)
       except NoSuchElementException:
         logging.debug("NoSuchElementException. Trying again...")

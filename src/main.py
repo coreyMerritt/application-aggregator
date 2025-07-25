@@ -6,15 +6,17 @@ import traceback
 import yaml
 from box import Box
 import undetected_chromedriver as uc
+from models.configs.database_config import DatabaseConfig
+from services.misc.database_manager import DatabaseManager
 from services.misc.selenium_helper import SeleniumHelper
 from services.orchestration.glassdoor_orchestration_engine import GlassdoorOrchestrationEngine
 from services.orchestration.indeed_orchestration_engine import IndeedOrchestrationEngine
 from services.orchestration.linkedin_orchestration_engine import LinkedinOrchestrationEngine
-from services.pages.indeed_apply_now_page import IndeedApplyNowPage
+from services.pages.indeed_apply_now_page.indeed_apply_now_page import IndeedApplyNowPage
 
 
 DEFAULT_PAGE_LOAD_TIMEOUT = 30
-APPLY_ON_INDEED = False
+APPLY_ON_INDEED = True
 APPLY_ON_GLASSDOOR = False
 APPLY_ON_LINKEDIN = True
 INPUT_AFTER_EACH_SERVICE = True
@@ -29,13 +31,22 @@ def __main__():
     options.binary_location = config.browser.path
     driver = uc.Chrome(options=options)
     selenium_helper = SeleniumHelper(driver, DEFAULT_PAGE_LOAD_TIMEOUT)
+    database_config = DatabaseConfig(
+      engine=config.database.engine,
+      username=config.database.username,
+      password=config.database.password,
+      host=config.database.host,
+      port=config.database.port,
+      name=config.database.name
+    )
+    database_manager = DatabaseManager(database_config)
 
     if APPLY_ON_INDEED:
       apply_on_indeed(driver, selenium_helper, config)
     if APPLY_ON_GLASSDOOR:
       apply_on_glassdoor(driver, selenium_helper, config)
     if APPLY_ON_LINKEDIN:
-      apply_on_linkedin(driver, selenium_helper, config)
+      apply_on_linkedin(driver, selenium_helper, database_manager, config)
 
     input("\n\tPress enter to exit...")
     remove_all_tabs_except_first(driver)
@@ -65,7 +76,7 @@ def apply_on_glassdoor(driver: uc.Chrome, selenium_helper: SeleniumHelper, confi
     selenium_helper,
     config.glassdoor,
     config.universal,
-    IndeedApplyNowPage(driver, selenium_helper, config.indeed, config.universal)
+    IndeedApplyNowPage(driver, selenium_helper, config.universal)
   )
   glassdoor_orchestration_engine.apply()
   if INPUT_AFTER_EACH_SERVICE:
@@ -73,10 +84,16 @@ def apply_on_glassdoor(driver: uc.Chrome, selenium_helper: SeleniumHelper, confi
   if REMOVE_TABS_AFTER_EACH_SERVICE:
     remove_all_tabs_except_first(driver)
 
-def apply_on_linkedin(driver: uc.Chrome, selenium_helper: SeleniumHelper, config: Box) -> None:
+def apply_on_linkedin(
+  driver: uc.Chrome,
+  selenium_helper: SeleniumHelper,
+  database_manager: DatabaseManager,
+  config: Box
+) -> None:
   linkedin_orchestration_engine = LinkedinOrchestrationEngine(
     driver,
     selenium_helper,
+    database_manager,
     config.linkedin,
     config.universal
   )

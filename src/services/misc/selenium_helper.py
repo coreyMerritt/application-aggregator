@@ -24,7 +24,15 @@ class SeleniumHelper:
       config = yaml.safe_load(config_file)
     options = uc.ChromeOptions()
     options.binary_location = config["browser"]["path"]
+    options.add_argument("--no-first-run")
+    options.add_argument("--no-default-browser-check")
+    options.add_argument("--disable-extensions")
     driver = uc.Chrome(options=options)
+    driver.delete_all_cookies()
+    driver.execute_cdp_cmd("Storage.clearDataForOrigin", {
+      "origin": "https://www.indeed.com",
+      "storageTypes": "all"
+    })
     return driver
 
   def set_driver_timeout_to_default(self) -> None:
@@ -140,8 +148,11 @@ class SeleniumHelper:
         continue
     raise NoSuchElementException(f"Failed to find {element_type.value} with aria-label: {some_aria_label}")
 
-  def write_to_input(self, some_text: str, input_el: WebElement) -> None:
-    logging.debug("Writing: %s to input...", some_text)
+  def write_to_input(self, some_text: str, input_el: WebElement, sensitive=False) -> None:
+    if sensitive:
+      logging.debug("Writing: %s to input...", "*" * len(some_text))
+    else:
+      logging.debug("Writing: %s to input...", some_text)
     if input_el.text.lower().strip() != some_text.lower().strip():
       input_el.send_keys(Keys.CONTROL + "a")
       input_el.send_keys(Keys.BACKSPACE)

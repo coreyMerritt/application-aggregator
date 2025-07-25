@@ -3,6 +3,7 @@ import time
 import undetected_chromedriver as uc
 from models.configs.linkedin_config import LinkedinConfig
 from models.configs.universal_config import UniversalConfig
+from services.misc.database_manager import DatabaseManager
 from services.misc.selenium_helper import SeleniumHelper
 from services.pages.linkedin_login_page import LinkedinLoginPage
 from services.pages.linkedin_job_listings_page import LinkedinJobListingsPage
@@ -13,6 +14,7 @@ class LinkedinOrchestrationEngine:
   __driver: uc.Chrome
   __linkedin_config: LinkedinConfig
   __universal_config: UniversalConfig
+  __database_manager: DatabaseManager
   __linkedin_login_page: LinkedinLoginPage
   __linkedin_job_listings_page: LinkedinJobListingsPage
 
@@ -20,16 +22,22 @@ class LinkedinOrchestrationEngine:
     self,
     driver: uc.Chrome,
     selenium_helper: SeleniumHelper,
+    database_manager: DatabaseManager,
     linkedin_config: LinkedinConfig,
-    universal_config: UniversalConfig
+    universal_config: UniversalConfig,
   ):
     self.__driver = driver
     self.__linkedin_config = linkedin_config
     self.__universal_config = universal_config
-    self.__linkedin_login_page = LinkedinLoginPage(driver, selenium_helper, linkedin_config)
+    self.__linkedin_login_page = LinkedinLoginPage(
+      driver,
+      selenium_helper,
+      linkedin_config
+    )
     self.__linkedin_job_listings_page = LinkedinJobListingsPage(
       driver,
       selenium_helper,
+      database_manager,
       linkedin_config,
       universal_config
     )

@@ -1,5 +1,12 @@
 browser:
   path: ""  # ex) "/usr/bin/google-chrome"
+database:
+  engine: ""  # postgresql | mysql | mariadb
+  username: ""  # ex) "root"
+  password: ""  # ex) "S0meP@ssword123"
+  host: ""  # ex) "127.0.0.1"
+  port: 0000  # ex) 3306
+  name: ""  # ex) "application-aggregator"
 universal:
   about_me:
     authorized_to_work_in_us: true
@@ -19,6 +26,7 @@ universal:
       state_code: ""  # ex) "TX"
       street_address: ""  # ex) "12345 Some St"
     work_experience:
+      # Most recent first
       - title: "" # ex) "Software Engineer"
         company: "" # ex) "Amazon"
         currently_work_here: false
@@ -78,18 +86,18 @@ universal:
   bot_behavior:
     pause_every_x_jobs: 50  # Recommended default
     ignore:
-      companies: []
-        # - "Amazon"
-        # - "Walmart"
-      descriptions: []
-        # - "10+ years of experience"
-        # - "travel"
-      locations: []
-        # - "Ohio"
-        # - "Hybrid"
       titles: []
         # - "Customer Support"
         # - "Mechanic"
+      companies: []
+        # - "Amazon"
+        # - "Walmart"
+      locations: []
+        # - "Ohio"
+        # - "Hybrid"
+      descriptions: []
+        # - "10+ years of experience"
+        # - "travel"
   search:
     experience:
       # These can have dramatic affects on search results.
@@ -122,9 +130,8 @@ glassdoor:
   email: "" # ex) "john.smith@gmail.com" 
   password: ""  # ex) "J0hnP@ssword123"
 indeed:
+  apply_now_only: true
   email: "" # ex) "john.smith@gmail.com" 
-  relevant_experience_company: "" # ex) "Amazon"
-  relevant_experience_job_title: "" # ex) "Software Engineer"
 linkedin:
   easy_apply_only: true
   email: "" # ex) "john.smith@gmail.com" 

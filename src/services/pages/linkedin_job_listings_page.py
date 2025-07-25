@@ -14,9 +14,9 @@ from selenium.common.exceptions import (
 from entities.linkedin_brief_job_listing import LinkedinBriefJobListing
 from entities.linkedin_job_listing import LinkedinJobListing
 from models.enums.element_type import ElementType
-from models.enums.linkedin_apply_button_type import LinkedinApplyButtonType
 from models.configs.linkedin_config import LinkedinConfig
 from models.configs.universal_config import UniversalConfig
+from services.misc.database_manager import DatabaseManager
 from services.pages.linkedin_apply_now_page.linkedin_apply_now_page import LinkedinApplyNowPage
 from services.misc.selenium_helper import SeleniumHelper
 
@@ -25,6 +25,7 @@ class LinkedinJobListingsPage:
   __driver: uc.Chrome
   __selenium_helper: SeleniumHelper
   __universal_config: UniversalConfig
+  __database_manager: DatabaseManager
   __linkedin_apply_now_page: LinkedinApplyNowPage
   __jobs_applied_to_this_session: List[dict[str, str | float | None]]
 
@@ -32,11 +33,13 @@ class LinkedinJobListingsPage:
     self,
     driver: uc.Chrome,
     selenium_helper: SeleniumHelper,
+    database_manager: DatabaseManager,
     linkedin_config: LinkedinConfig,
     universal_config: UniversalConfig
   ):
     self.__driver = driver
     self.__selenium_helper = selenium_helper
+    self.__database_manager = database_manager
     self.__universal_config = universal_config
     self.__linkedin_apply_now_page = LinkedinApplyNowPage(driver, selenium_helper, linkedin_config, universal_config)
     self.__jobs_applied_to_this_session = []
@@ -86,6 +89,13 @@ class LinkedinJobListingsPage:
       starting_tab_count = len(self.__driver.window_handles)
       try:
         self.__apply_to_selected_job()
+        self.__database_manager.create_new_job_application_entry(
+          self.__universal_config,
+          brief_job_listing,
+          self.__driver.current_url
+        )
+        self.__driver.switch_to.window(self.__driver.window_handles[0])
+        # TODO: Replace this with proper database checks
         self.__jobs_applied_to_this_session.append(brief_job_listing.to_dict())
       except RuntimeError:
         logging.warning("Assuming this job posting has no apply button, continuing...")
@@ -149,10 +159,9 @@ class LinkedinJobListingsPage:
     apply_button_text = apply_button.text
     assert apply_button_text
     apply_button_text = apply_button_text.strip()
-    application_is_on_linkedin = apply_button_text.lower() == LinkedinApplyButtonType.EASY_APPLY.value.lower()
+    application_is_on_linkedin = apply_button_text.lower() == "easy apply"
     if application_is_on_linkedin:
       self.__apply_in_new_tab()
-      self.__driver.switch_to.window(self.__driver.window_handles[0])
       return
     elif not application_is_on_linkedin:
       starting_tab_count = len(self.__driver.window_handles)
@@ -168,7 +177,6 @@ class LinkedinJobListingsPage:
     start_time = time.time()
     while time.time() - start_time < timeout:
       if len(self.__driver.window_handles) > starting_tab_count:
-        self.__driver.switch_to.window(self.__driver.window_handles[0])
         return
       logging.debug("Waiting for new tab to open...")
       if self.__job_search_safety_reminder_popup_is_present():

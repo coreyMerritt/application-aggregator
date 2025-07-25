@@ -3,6 +3,5 @@ from dataclasses import dataclass
 
 @dataclass
 class IndeedConfig:
+  apply_now_only: bool
   email: str
-  relevant_experience_company: str
-  relevant_experience_job_title: str

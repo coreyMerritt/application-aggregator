@@ -1,6 +1,8 @@
 #!/bin/bash
 
-set -e -E -x
+set -e
+set -E
+set -x
 
 is_ubuntu="$(cat /etc/os-release | grep -i ubuntu)"
 if [[ $is_ubuntu ]]; then
@@ -28,7 +30,8 @@ fi
 
 pip install -r requirements.txt
 if [[ ! -f "config.yml" ]]; then
-  cp -rf config_model.yml config.yml
+  cp config_model.yml config.yml
 fi
 
 exit 0
+

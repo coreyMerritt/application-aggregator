@@ -1,0 +1,68 @@
+import logging
+import time
+import undetected_chromedriver as uc
+from selenium.webdriver.common.by import By
+from selenium.common.exceptions import NoSuchElementException
+from models.configs.indeed_config import IndeedConfig
+from models.configs.universal_config import UniversalConfig
+from services.misc.selenium_helper import SeleniumHelper
+from services.pages.indeed_login_page import IndeedLoginPage
+from services.pages.indeed_one_time_code_page import IndeedOneTimeCodePage
+from services.pages.indeed_job_listings_page import IndeedJobListingsPage
+from services.query_url_builders.indeed_query_url_builder import IndeedQueryUrlBuilder
+
+
+class IndeedOrchestrationEngine:
+  __driver: uc.Chrome
+  __universal_config: UniversalConfig
+  __indeed_login_page: IndeedLoginPage
+  __indeed_one_time_code_page: IndeedOneTimeCodePage
+  __indeed_job_listings_page: IndeedJobListingsPage
+
+  def __init__(
+    self,
+    driver: uc.Chrome,
+    selenium_helper: SeleniumHelper,
+    indeed_config: IndeedConfig,
+    universal_config: UniversalConfig
+  ):
+    self.__driver = driver
+    self.__universal_config = universal_config
+    self.__indeed_login_page = IndeedLoginPage(driver, selenium_helper, indeed_config)
+    self.__indeed_one_time_code_page = IndeedOneTimeCodePage(driver, selenium_helper)
+    self.__indeed_job_listings_page = IndeedJobListingsPage(driver, selenium_helper, indeed_config, universal_config)
+
+  def apply(self) -> None:
+    base_url = "https://www.indeed.com"
+    logging.debug("Applying to %s...", base_url)
+    self.__indeed_login_page.login()
+    while not self.__indeed_one_time_code_page.is_present():
+      logging.debug("Waiting for one-time-code page to appear...")
+      time.sleep(0.5)
+    if self.__indeed_one_time_code_page.can_resolve_with_mail_dot_com():
+      try:
+        self.__indeed_one_time_code_page.resolve_with_mail_dot_com()
+      except Exception:
+        self.__driver.switch_to.window(self.__driver.window_handles[-1])
+        self.__driver.close()
+        self.__driver.switch_to.window(self.__driver.window_handles[0])
+    self.__indeed_one_time_code_page.wait_for_captcha_resolution()
+    self.__go_to_query()
+    while not self.__indeed_job_listings_page.is_present():
+      logging.debug("Waiting for job listings page to appear...")
+      time.sleep(0.5)
+    self.__indeed_job_listings_page.apply_to_all_matching_jobs()
+
+  def __go_to_query(self) -> None:
+    query_url_builder = IndeedQueryUrlBuilder(self.__universal_config)
+    query_url = query_url_builder.build()
+    logging.debug("Going to %s...",  query_url)
+    self.__driver.get(query_url)
+    verification_element_name = "q"
+    while True:
+      try:
+        self.__driver.find_element(By.NAME, verification_element_name)
+        break
+      except NoSuchElementException:
+        logging.debug("Waiting for page verification element to appear...")
+        time.sleep(0.5)

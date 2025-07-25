@@ -1,0 +1,117 @@
+browser:
+  path: ""
+universal:
+  about_me:
+    authorized_to_work_in_us: true
+    military_veteran: false
+    willing_to_relocate: true
+    name:
+      first: ""
+      last: ""
+    contact:
+      email_address: ""
+      phone_number: ""
+    location:
+      city: ""
+      country: ""
+      postal_code: ""
+      state: ""
+      state_code: ""
+      street_address: ""
+    work_experience:
+      - title: ""
+        company: ""
+        currently_work_here: false
+        start:
+          day_of_month: 00
+          month: 00
+          year: 0000
+        end:
+          day_of_month: 00
+          month: 00
+          year: 0000
+      - title: ""
+        company: ""
+        currently_work_here: false
+        start:
+          day_of_month: 00
+          month: 00
+          year: 0000
+        end:
+          day_of_month: 00
+          month: 00
+          year: 0000
+    education:
+      degrees:
+        - currently_attending: false
+          school: ""
+          city: ""
+          state: ""   # Full state name, no abbrieviations: ex) Utah
+          country: ""   # Full country name, no abbrieviations: ex) United States
+          degree_type: ""   # ex) Bachelor of Science
+          field_of_study: ""  # ex) Computer Science
+          start:
+            day_of_month: 00
+            month: 00
+            year: 0000
+          end:
+            day_of_month: 00
+            month: 00
+            year: 0000
+        - currently_attending: false
+          school: ""
+          city: ""
+          state: ""   # ex) "Utah"
+          country: ""   # ex) "United States"
+          degree_type: ""   # ex) "Bachelor's Degree"
+          field_of_study: ""  # ex) "Computer Science"
+          start:
+            day_of_month: 00
+            month: 00
+            year: 0000
+          end:
+            day_of_month: 00
+            month: 00
+            year: 0000
+    links:
+      github: ""  # ex) "https://github.com/torvalds"
+  bot_behavior:
+    pause_every_x_jobs: 50
+    ignore:
+      companies: []
+      descriptions: []
+      locations: []
+      titles: []
+  search:
+    experience:
+      entry: false
+      mid: true
+      senior: false
+    location:
+      city: null
+      max_distance_in_mis: 0
+      hybrid: false
+      remote: true
+    salary:
+      min: 30000
+      max: 300000
+    terms:
+      match: []
+      # These ignore terms will be fed directly into job listing search queries and can have dramatic affects.
+      # If unsure, use the universal.bot_behavior.ignore section instead.
+      ignore: []
+    misc:
+      max_age_in_days: 7
+      min_company_rating: 3.0
+glassdoor:
+  email: ""
+  password: ""
+indeed:
+  email: ""
+  relevant_experience_company: ""
+  relevant_experience_job_title: ""
+  query_url: ""
+linkedin:
+  easy_apply_only: true
+  email: ""
+  password: ""

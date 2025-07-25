@@ -16,9 +16,9 @@ from services.pages.indeed_apply_now_page.indeed_apply_now_page import IndeedApp
 
 
 DEFAULT_PAGE_LOAD_TIMEOUT = 30
+APPLY_ON_LINKEDIN = False
+APPLY_ON_GLASSDOOR = False
 APPLY_ON_INDEED = False
-APPLY_ON_GLASSDOOR = True
-APPLY_ON_LINKEDIN = True
 INPUT_AFTER_EACH_SERVICE = True
 REMOVE_TABS_AFTER_EACH_SERVICE = False
 
@@ -41,12 +41,12 @@ def __main__():
     )
     database_manager = DatabaseManager(database_config)
 
-    if APPLY_ON_INDEED:
-      apply_on_indeed(driver, selenium_helper, config)
-    if APPLY_ON_GLASSDOOR:
-      apply_on_glassdoor(driver, selenium_helper, config)
     if APPLY_ON_LINKEDIN:
       apply_on_linkedin(driver, selenium_helper, database_manager, config)
+    if APPLY_ON_GLASSDOOR:
+      apply_on_glassdoor(driver, selenium_helper, config)
+    if APPLY_ON_INDEED:
+      apply_on_indeed(driver, selenium_helper, config)
 
     input("\n\tPress enter to exit...")
     remove_all_tabs_except_first(driver)

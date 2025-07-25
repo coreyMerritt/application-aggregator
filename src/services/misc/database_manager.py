@@ -31,17 +31,19 @@ class DatabaseManager:
     self,
     universal_config: UniversalConfig,
     brief_job_listing: BriefJobListing,
-    url: str
+    url: str,
+    platform: str
   ) -> None:
     job_application = JobApplicationORM(
+      platform=platform,
+      url=url,
       first_name=universal_config.about_me.name.first,
       last_name=universal_config.about_me.name.last,
       job_title=brief_job_listing.get_title(),
       company=brief_job_listing.get_company(),
       location=brief_job_listing.get_location(),
       min_pay=brief_job_listing.get_min_pay(),
-      max_pay=brief_job_listing.get_max_pay(),
-      url=url
+      max_pay=brief_job_listing.get_max_pay()
     )
     session: Session = self.__session_factory()
     ENTRY_EXISTS = session.query(JobApplicationORM).filter_by(

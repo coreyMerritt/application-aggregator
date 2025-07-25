@@ -24,6 +24,7 @@ class IndeedResumeStepper:
     self.__universal_config = universal_config
 
   def resolve(self, resume_url: str) -> None:
+    input("Triggered")
     if not self.__resume_preview_is_visible():
       self.__select_first_resume()
     self.__click_continue_button()

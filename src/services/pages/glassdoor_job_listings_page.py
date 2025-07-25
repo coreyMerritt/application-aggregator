@@ -142,8 +142,11 @@ class GlassdoorJobListingsPage:
     while len(self.__driver.window_handles) == starting_window_count:
       logging.debug("Waiting for new tab to open...")
       time.sleep(0.1)
+    self.__driver.switch_to.window(self.__driver.window_handles[-1])
     self.__handle_potential_human_verification_wait()
+    self.__handle_potential_too_many_requests()
     self.__handle_application(apply_button_text)
+    self.__driver.switch_to.window(self.__driver.window_handles[0])
 
   def __get_apply_button(self) -> WebElement | None:
     easy_apply_button_selector = '[data-test="easyApply"]'
@@ -178,12 +181,16 @@ class GlassdoorJobListingsPage:
 
   def __handle_application(self, apply_button_text: str) -> None:
     if apply_button_text.lower().strip() == "apply now":
-      self.__driver.switch_to.window(self.__driver.window_handles[-1])
+      input(1)
       self.__easy_apply()
-    elif apply_button_text.lower().strip() == "apply on company site":
-      self.__driver.switch_to.window(self.__driver.window_handles[0])
-    elif apply_button_text.lower().strip() == "applied":
       return
+    elif apply_button_text.lower().strip() == "apply on company site":
+      input(2)
+      return
+    elif apply_button_text.lower().strip() == "applied":
+      input(3)
+      return
+    input(apply_button_text)
 
   def __easy_apply(self) -> None:
     logging.debug("Executing easy apply...")
@@ -201,10 +208,19 @@ class GlassdoorJobListingsPage:
       pass
 
   def __handle_potential_human_verification_wait(self) -> None:
-    header = self.__driver.find_element(By.TAG_NAME, 'h1')
-    while header.text == "Additional Verification Required":
+    while self.__selenium_helper.exact_text_is_present(
+      "Additional Verification Required",
+      ElementType.H1
+    ):
       logging.debug("Waiting for user to handle captcha...")
       time.sleep(0.5)
+
+  def __handle_potential_too_many_requests(self) -> None:
+    while self.__selenium_helper.exact_text_is_present(
+      "Too Many Requests",
+      ElementType.H1
+    ):
+      input("Heck, rate limited...")
 
   def __is_job_listing(self, element: WebElement) -> bool:
     attr = element.get_attribute("data-test")

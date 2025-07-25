@@ -6,6 +6,8 @@ from models.db.base import Base
 class JobApplicationORM(Base):
   __tablename__ = 'job_applications'
   id = Column(Integer, primary_key=True)
+  platform = Column(String)
+  url = Column(String)
   first_name = Column(String)
   last_name = Column(String)
   job_title = Column(String)
@@ -13,5 +15,4 @@ class JobApplicationORM(Base):
   location = Column(String)
   min_pay = Column(Float, nullable=True)
   max_pay = Column(Float, nullable=True)
-  url = Column(String)
   timestamp = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))

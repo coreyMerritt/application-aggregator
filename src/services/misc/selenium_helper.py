@@ -27,12 +27,9 @@ class SeleniumHelper:
     options.add_argument("--no-first-run")
     options.add_argument("--no-default-browser-check")
     options.add_argument("--disable-extensions")
+    options.add_argument("--incognito")
     driver = uc.Chrome(options=options)
     driver.delete_all_cookies()
-    driver.execute_cdp_cmd("Storage.clearDataForOrigin", {
-      "origin": "https://www.indeed.com",
-      "storageTypes": "all"
-    })
     return driver
 
   def set_driver_timeout_to_default(self) -> None:

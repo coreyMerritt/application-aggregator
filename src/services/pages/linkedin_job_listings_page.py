@@ -78,11 +78,7 @@ class LinkedinJobListingsPage:
       previous_job_details_html = self.__get_full_job_details_div().get_attribute("innerHTML")
       assert previous_job_details_html
       self.__click_job_listing_li(job_listing_li)
-      try:
-        self.__wait_for_full_job_details_div_to_change(previous_job_details_html)
-      except TimeoutError:
-        self.__scroll_jobs_ul()
-        self.__click_job_listing_li(job_listing_li)
+      self.__wait_for_full_job_details_div_to_change(previous_job_details_html, job_listing_li)
       job_listing = self.__build_new_job_listing(brief_job_listing)
       if job_listing.should_be_ignored(self.__universal_config):
         continue
@@ -92,10 +88,10 @@ class LinkedinJobListingsPage:
         self.__database_manager.create_new_job_application_entry(
           self.__universal_config,
           brief_job_listing,
-          self.__driver.current_url
+          self.__driver.current_url,
+          "Linkedin"
         )
         self.__driver.switch_to.window(self.__driver.window_handles[0])
-        # TODO: Replace this with proper database checks
         self.__jobs_applied_to_this_session.append(brief_job_listing.to_dict())
       except RuntimeError:
         logging.warning("Assuming this job posting has no apply button, continuing...")
@@ -131,13 +127,28 @@ class LinkedinJobListingsPage:
       job_listing_li_index = 1
     return (total_jobs_tried, job_listing_li_index)
 
-  def __wait_for_full_job_details_div_to_change(self, previous_job_details_html: str, timeout=3) -> None:
+  def __wait_for_full_job_details_div_to_change(
+    self,
+    previous_job_details_html: str,
+    job_listing_li: WebElement,
+    timeout=60
+  ) -> None:
     start_time = time.time()
     while time.time() - start_time < timeout:
-      if self.__get_full_job_details_div().get_attribute("innerHTML") != previous_job_details_html:
-        break
-      logging.debug("Waiting for full job listing to load...")
-      time.sleep(0.5)
+      try:
+        if self.__get_full_job_details_div().get_attribute("innerHTML") != previous_job_details_html:
+          return
+        logging.debug("Waiting for full job listing to load...")
+        time.sleep(0.5)
+      except TimeoutError:
+        self.__scroll_jobs_ul()
+        self.__click_job_listing_li(job_listing_li)
+      except NoSuchElementException:
+        if self.__selenium_helper.exact_text_is_present(
+          "Something went wrong",
+          ElementType.H2
+        ):
+          self.__driver.refresh()
     raise TimeoutError("Timed out waiting for full job listing to load.")
 
   def __handle_page_context(self, total_jobs_tried: int) -> None:
@@ -327,7 +338,7 @@ class LinkedinJobListingsPage:
         except NoSuchElementException:
           pass
     if self.__on_http_error_page():
-      self.__handle_http_error_page()
+      self.__driver.refresh()
       self.__driver.find_element(By.XPATH, potential_job_listing_ul_xpath)
       main_content_div = self.__driver.find_element(By.XPATH, potential_main_div_xpath)
       if main_content_div:
@@ -344,7 +355,7 @@ class LinkedinJobListingsPage:
 
   def __handle_http_error_page(self) -> None:
     self.__driver.refresh()
-    time.sleep(5)   # TODO: We need a proper wait condition here
+    # time.sleep(5)   # TODO: We need a proper wait condition here
 
   def __get_next_page_span(self) -> WebElement:
     logging.debug("Getting next page button...")

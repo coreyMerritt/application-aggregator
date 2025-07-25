@@ -40,6 +40,7 @@ class IndeedOrchestrationEngine:
       logging.debug("Waiting for one-time-code page to appear...")
       time.sleep(0.5)
     if self.__indeed_one_time_code_page.can_resolve_with_mail_dot_com():
+      time.sleep(1)
       self.__indeed_one_time_code_page.resolve_with_mail_dot_com()
     self.__indeed_one_time_code_page.wait_for_captcha_resolution()
     self.__go_to_query()

@@ -27,6 +27,7 @@ class GlassdoorLoginPage:
     logging.debug("Logging in...")
     base_url = "https://www.glassdoor.com"
     self.__driver.get(base_url)
+    self.__wait_for_email_form()
     email_form_name = "emailForm"
     email_form = self.__driver.find_element(By.NAME, email_form_name)
     email_input_id = "inlineUserEmail"
@@ -69,3 +70,14 @@ class GlassdoorLoginPage:
     while not expected_landing_url in self.__driver.current_url:
       logging.debug("Waiting for %s to be in url...", expected_landing_url)
       time.sleep(0.5)
+
+  def __wait_for_email_form(self, timeout=10) -> None:
+    email_form_name = "emailForm"
+    start_time = time.time()
+    while time.time() - start_time < timeout:
+      try:
+        self.__driver.find_element(By.NAME, email_form_name)
+        break
+      except NoSuchElementException:
+        logging.debug("Failed to find email form. Trying again...")
+        time.sleep(0.5)

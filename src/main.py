@@ -16,8 +16,8 @@ from services.pages.indeed_apply_now_page.indeed_apply_now_page import IndeedApp
 
 
 DEFAULT_PAGE_LOAD_TIMEOUT = 30
-APPLY_ON_INDEED = True
-APPLY_ON_GLASSDOOR = False
+APPLY_ON_INDEED = False
+APPLY_ON_GLASSDOOR = True
 APPLY_ON_LINKEDIN = True
 INPUT_AFTER_EACH_SERVICE = True
 REMOVE_TABS_AFTER_EACH_SERVICE = False

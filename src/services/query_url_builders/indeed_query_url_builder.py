@@ -67,7 +67,9 @@ class IndeedQueryUrlBuilder:
     self.__url += "&from=searchOnDesktopSerp"
 
   def __add_location(self) -> None:
-    if self.__location:
+    if self.__remote:
+      self.__url += '&l="remote"'
+    elif self.__location:
       self.__url += f"&l={self.__location}"
     else:
       self.__url += "&l="

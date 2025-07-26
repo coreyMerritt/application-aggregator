@@ -4,7 +4,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import sessionmaker, Session
 from entities.abc_brief_job_listing import BriefJobListing
-from models.configs.database_config import DatabaseConfig
+from models.configs.system_config import DatabaseConfig
 from models.configs.universal_config import UniversalConfig
 from models.db.base import Base
 from models.db.job_application import JobApplicationORM

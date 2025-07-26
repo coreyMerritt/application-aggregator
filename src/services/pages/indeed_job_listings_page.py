@@ -10,6 +10,7 @@ from selenium.common.exceptions import (
 from entities.indeed_brief_job_listing import IndeedBriefJobListing
 from entities.indeed_job_listing import IndeedJobListing
 from models.configs.indeed_config import IndeedConfig
+from models.configs.quick_settings import QuickSettings
 from models.configs.universal_config import UniversalConfig
 from models.enums.element_type import ElementType
 from services.misc.selenium_helper import SeleniumHelper
@@ -20,6 +21,7 @@ class IndeedJobListingsPage:
   __driver: uc.Chrome
   __selenium_helper: SeleniumHelper
   __universal_config: UniversalConfig
+  __quick_settings: QuickSettings
   __indeed_config: IndeedConfig
   __apply_now_page: IndeedApplyNowPage
   __jobs_applied_to_this_session: List[dict[str, str | float | None]]
@@ -30,11 +32,13 @@ class IndeedJobListingsPage:
     driver: uc.Chrome,
     selenium_helper: SeleniumHelper,
     universal_config: UniversalConfig,
+    quick_settings: QuickSettings,
     indeed_config: IndeedConfig
   ):
     self.__driver = driver
     self.__selenium_helper = selenium_helper
     self.__universal_config = universal_config
+    self.__quick_settings = quick_settings
     self.__indeed_config = indeed_config
     self.__apply_now_page = IndeedApplyNowPage(driver, selenium_helper, universal_config)
     self.__jobs_applied_to_this_session = []
@@ -189,7 +193,7 @@ class IndeedJobListingsPage:
 
   def __handle_potential_overload(self) -> None:
     if len(self.__jobs_applied_to_this_session) > 0:
-      if len(self.__jobs_applied_to_this_session) % self.__universal_config.bot_behavior.pause_every_x_jobs == 0:
+      if len(self.__jobs_applied_to_this_session) % self.__quick_settings.bot_behavior.pause_every_x_jobs == 0:
         print("\nPausing to allow user to handle existing tabs before overload.")
         input("\tPress enter to proceed...")
 
@@ -332,18 +336,3 @@ class IndeedJobListingsPage:
     company_site_link = apply_on_company_site_button.get_attribute("href")
     assert company_site_link
     self.__driver.get(company_site_link)
-
-  def __remove_did_you_apply_popup(self, timeout=3) -> None:
-    potential_exit_button_xpaths = [
-      "/html/body/main/div/div[2]/div/div[5]/div/div[2]/div/div/div[2]/div[2]/div[1]/div/div[3]/div/div[3]/div/div[2]/div/div[1]/div[2]/button",   # pylint: disable=line-too-long
-      "/html/body/main/div/div[2]/div/div[5]/div/div[2]/div/div/div[2]/div[2]/div[1]/div/div[4]/div/div[3]/div/div[2]/div/div[1]/div[2]/button"   # pylint: disable=line-too-long
-    ]
-    start_time = time.time()
-    while time.time() - start_time < timeout:
-      for xpath in potential_exit_button_xpaths:
-        try:
-          exit_button = self.__driver.find_element(By.XPATH, xpath)
-          exit_button.click()
-          return
-        except NoSuchElementException:
-          pass

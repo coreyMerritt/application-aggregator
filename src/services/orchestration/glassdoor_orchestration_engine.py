@@ -2,6 +2,7 @@ import logging
 import undetected_chromedriver as uc
 from selenium.common.exceptions import TimeoutException
 from models.configs.glassdoor_config import GlassdoorConfig
+from models.configs.quick_settings import QuickSettings
 from models.configs.universal_config import UniversalConfig
 from services.query_url_builders.glassdoor_query_url_builder import GlassdoorQueryUrlBuilder
 from services.misc.selenium_helper import SeleniumHelper
@@ -20,8 +21,9 @@ class GlassdoorOrchestrationEngine:
     self,
     driver: uc.Chrome,
     selenium_helper: SeleniumHelper,
-    glassdoor_config: GlassdoorConfig,
     universal_config: UniversalConfig,
+    quick_settings: QuickSettings,
+    glassdoor_config: GlassdoorConfig,
     indeed_apply_now_page: IndeedApplyNowPage
   ):
     self.__driver = driver
@@ -31,6 +33,7 @@ class GlassdoorOrchestrationEngine:
       driver,
       selenium_helper,
       universal_config,
+      quick_settings,
       indeed_apply_now_page
     )
 

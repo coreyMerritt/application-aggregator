@@ -1,5 +1,4 @@
 import logging
-import time
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.common.keys import Keys
@@ -22,8 +21,8 @@ class LinkedinContactInfoStepper:
   def __init__(
     self,
     selenium_helper: SeleniumHelper,
-    linkedin_config: LinkedinConfig,
-    universal_config: UniversalConfig
+    universal_config: UniversalConfig,
+    linkedin_config: LinkedinConfig
   ):
     self.__selenium_helper = selenium_helper
     self.__linkedin_config = linkedin_config

@@ -76,6 +76,7 @@ class Ignore:
 
 @dataclass
 class BotBehavior:
+  ignore_jobs_that_demand_cover_letters: bool = False
   pause_every_x_jobs: int = 50
   ignore: Ignore = field(default_factory=Ignore)
 

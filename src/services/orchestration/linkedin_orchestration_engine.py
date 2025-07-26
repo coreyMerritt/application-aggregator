@@ -2,6 +2,7 @@ import logging
 import time
 import undetected_chromedriver as uc
 from models.configs.linkedin_config import LinkedinConfig
+from models.configs.quick_settings import QuickSettings
 from models.configs.universal_config import UniversalConfig
 from services.misc.database_manager import DatabaseManager
 from services.misc.selenium_helper import SeleniumHelper
@@ -23,8 +24,9 @@ class LinkedinOrchestrationEngine:
     driver: uc.Chrome,
     selenium_helper: SeleniumHelper,
     database_manager: DatabaseManager,
-    linkedin_config: LinkedinConfig,
     universal_config: UniversalConfig,
+    quick_settings: QuickSettings,
+    linkedin_config: LinkedinConfig,
   ):
     self.__driver = driver
     self.__linkedin_config = linkedin_config
@@ -38,8 +40,9 @@ class LinkedinOrchestrationEngine:
       driver,
       selenium_helper,
       database_manager,
-      linkedin_config,
-      universal_config
+      universal_config,
+      quick_settings,
+      linkedin_config
     )
 
   def apply(self):

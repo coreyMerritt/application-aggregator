@@ -13,6 +13,7 @@ from selenium.common.exceptions import (
 )
 from entities.linkedin_brief_job_listing import LinkedinBriefJobListing
 from entities.linkedin_job_listing import LinkedinJobListing
+from models.configs.quick_settings import QuickSettings
 from models.enums.element_type import ElementType
 from models.configs.linkedin_config import LinkedinConfig
 from models.configs.universal_config import UniversalConfig
@@ -25,6 +26,7 @@ class LinkedinJobListingsPage:
   __driver: uc.Chrome
   __selenium_helper: SeleniumHelper
   __universal_config: UniversalConfig
+  __quick_settings: QuickSettings
   __database_manager: DatabaseManager
   __linkedin_apply_now_page: LinkedinApplyNowPage
   __jobs_applied_to_this_session: List[dict[str, str | float | None]]
@@ -34,14 +36,21 @@ class LinkedinJobListingsPage:
     driver: uc.Chrome,
     selenium_helper: SeleniumHelper,
     database_manager: DatabaseManager,
-    linkedin_config: LinkedinConfig,
-    universal_config: UniversalConfig
+    universal_config: UniversalConfig,
+    quick_settings: QuickSettings,
+    linkedin_config: LinkedinConfig
   ):
     self.__driver = driver
     self.__selenium_helper = selenium_helper
     self.__database_manager = database_manager
     self.__universal_config = universal_config
-    self.__linkedin_apply_now_page = LinkedinApplyNowPage(driver, selenium_helper, linkedin_config, universal_config)
+    self.__quick_settings = quick_settings
+    self.__linkedin_apply_now_page = LinkedinApplyNowPage(
+      driver,
+      selenium_helper,
+      universal_config,
+      linkedin_config
+    )
     self.__jobs_applied_to_this_session = []
 
   def apply_to_all_matching_jobs(self) -> None:
@@ -75,10 +84,7 @@ class LinkedinJobListingsPage:
       if brief_job_listing.to_dict() in self.__jobs_applied_to_this_session:
         logging.debug("Ignoring job listing because: we've already applied this session.\n")
         continue
-      previous_job_details_html = self.__get_full_job_details_div().get_attribute("innerHTML")
-      assert previous_job_details_html
-      self.__click_job_listing_li(job_listing_li)
-      self.__wait_for_full_job_details_div_to_change(previous_job_details_html, job_listing_li)
+      self.__select_job(job_listing_li)
       job_listing = self.__build_new_job_listing(brief_job_listing)
       if job_listing.should_be_ignored(self.__universal_config):
         continue
@@ -100,22 +106,11 @@ class LinkedinJobListingsPage:
           self.__driver.switch_to.window(self.__driver.window_handles[0])
           continue
       if (
-        len(self.__jobs_applied_to_this_session) % self.__universal_config.bot_behavior.pause_every_x_jobs == 0
-        and len(self.__jobs_applied_to_this_session) >= self.__universal_config.bot_behavior.pause_every_x_jobs
+        len(self.__jobs_applied_to_this_session) % self.__quick_settings.bot_behavior.pause_every_x_jobs == 0
+        and len(self.__jobs_applied_to_this_session) >= self.__quick_settings.bot_behavior.pause_every_x_jobs
       ):
         print("\nPausing to allow user to handle existing tabs before overload.")
         input("\tPress enter to proceed...")
-
-  def __click_job_listing_li(self, job_listing_li: WebElement) -> None:
-    while True:
-      try:
-        job_listing_li.click()
-        break
-      except ElementClickInterceptedException:
-        logging.debug("Click intercepted... Attempting to resolve...")
-        if self.__job_search_safety_reminder_popup_is_present():
-          self.__remove_job_search_safety_reminder_popup()
-        time.sleep(0.1)
 
   def __handle_incrementors(self, total_jobs_tried: int, job_listing_li_index: int) -> Tuple[int, int]:
     total_jobs_tried += 1
@@ -127,12 +122,11 @@ class LinkedinJobListingsPage:
       job_listing_li_index = 1
     return (total_jobs_tried, job_listing_li_index)
 
-  def __wait_for_full_job_details_div_to_change(
-    self,
-    previous_job_details_html: str,
-    job_listing_li: WebElement,
-    timeout=60
-  ) -> None:
+  def __select_job(self, job_listing_li: WebElement, timeout=60) -> None:
+    previous_job_details_html = self.__get_full_job_details_div().get_attribute("innerHTML")
+    assert previous_job_details_html
+    self.__scroll_into_view(job_listing_li)
+    self.__click_job_listing_li(job_listing_li)
     start_time = time.time()
     while time.time() - start_time < timeout:
       try:
@@ -141,7 +135,7 @@ class LinkedinJobListingsPage:
         logging.debug("Waiting for full job listing to load...")
         time.sleep(0.5)
       except TimeoutError:
-        self.__scroll_jobs_ul()
+        self.__scroll_into_view(job_listing_li)
         self.__click_job_listing_li(job_listing_li)
       except NoSuchElementException:
         if self.__selenium_helper.exact_text_is_present(
@@ -150,6 +144,17 @@ class LinkedinJobListingsPage:
         ):
           self.__driver.refresh()
     raise TimeoutError("Timed out waiting for full job listing to load.")
+
+  def __click_job_listing_li(self, job_listing_li: WebElement) -> None:
+    while True:
+      try:
+        job_listing_li.click()
+        break
+      except ElementClickInterceptedException:
+        logging.debug("Click intercepted... Attempting to resolve...")
+        if self.__job_search_safety_reminder_popup_is_present():
+          self.__remove_job_search_safety_reminder_popup()
+        time.sleep(0.1)
 
   def __handle_page_context(self, total_jobs_tried: int) -> None:
     if total_jobs_tried > 26 and total_jobs_tried % 26 == 1:
@@ -353,10 +358,6 @@ class LinkedinJobListingsPage:
     except NoSuchElementException:
       return False
 
-  def __handle_http_error_page(self) -> None:
-    self.__driver.refresh()
-    # time.sleep(5)   # TODO: We need a proper wait condition here
-
   def __get_next_page_span(self) -> WebElement:
     logging.debug("Getting next page button...")
     main_content_div = self.__get_main_content_div()
@@ -384,7 +385,6 @@ class LinkedinJobListingsPage:
         self.__handle_job_load_error()
     raise RuntimeError("Failed to find apply button xpath.")
 
-
   def __job_search_safety_reminder_popup_is_present(self) -> bool:
     return self.__selenium_helper.exact_text_is_present("Job search safety reminder", ElementType.H2)
 
@@ -393,3 +393,6 @@ class LinkedinJobListingsPage:
       continue_applying_button_id = "jobs-apply-button-id"
       continue_applying_button = self.__driver.find_element(By.ID, continue_applying_button_id)
       continue_applying_button.click()
+
+  def __scroll_into_view(self, element: WebElement) -> None:
+    self.__driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", element)

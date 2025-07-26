@@ -4,6 +4,7 @@ import undetected_chromedriver as uc
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import NoSuchElementException
 from models.configs.indeed_config import IndeedConfig
+from models.configs.quick_settings import QuickSettings
 from models.configs.universal_config import UniversalConfig
 from services.misc.selenium_helper import SeleniumHelper
 from services.pages.indeed_login_page import IndeedLoginPage
@@ -23,14 +24,21 @@ class IndeedOrchestrationEngine:
     self,
     driver: uc.Chrome,
     selenium_helper: SeleniumHelper,
-    indeed_config: IndeedConfig,
-    universal_config: UniversalConfig
+    universal_config: UniversalConfig,
+    quick_settings: QuickSettings,
+    indeed_config: IndeedConfig
   ):
     self.__driver = driver
     self.__universal_config = universal_config
     self.__indeed_login_page = IndeedLoginPage(driver, selenium_helper, indeed_config)
     self.__indeed_one_time_code_page = IndeedOneTimeCodePage(driver, selenium_helper, indeed_config)
-    self.__indeed_job_listings_page = IndeedJobListingsPage(driver, selenium_helper, universal_config, indeed_config)
+    self.__indeed_job_listings_page = IndeedJobListingsPage(
+      driver,
+      selenium_helper,
+      universal_config,
+      quick_settings,
+      indeed_config
+    )
 
   def apply(self) -> None:
     base_url = "https://www.indeed.com"

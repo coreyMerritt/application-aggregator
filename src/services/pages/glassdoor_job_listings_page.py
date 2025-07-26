@@ -7,6 +7,7 @@ from selenium.webdriver.remote.webelement import WebElement
 from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException
 from entities.glassdoor_brief_job_listing import GlassdoorBriefJobListing
 from entities.glassdoor_job_listing import GlassdoorJobListing
+from models.configs.quick_settings import QuickSettings
 from models.enums.element_type import ElementType
 from models.configs.universal_config import UniversalConfig
 from services.pages.indeed_apply_now_page.indeed_apply_now_page import IndeedApplyNowPage
@@ -17,6 +18,7 @@ class GlassdoorJobListingsPage:
   __driver: uc.Chrome
   __selenium_helper: SeleniumHelper
   __universal_config: UniversalConfig
+  __quick_settings: QuickSettings
   __indeed_apply_now_page: IndeedApplyNowPage
   __jobs_applied_to_this_session: List[dict[str, str | float | None]]
 
@@ -25,11 +27,13 @@ class GlassdoorJobListingsPage:
     driver: uc.Chrome,
     selenium_helper: SeleniumHelper,
     universal_config: UniversalConfig,
+    quick_settings: QuickSettings,
     indeed_apply_now_page: IndeedApplyNowPage
   ):
     self.__driver = driver
     self.__selenium_helper = selenium_helper
     self.__universal_config = universal_config
+    self.__quick_settings = quick_settings
     self.__indeed_apply_now_page = indeed_apply_now_page
     self.__jobs_applied_to_this_session = []
 
@@ -80,7 +84,7 @@ class GlassdoorJobListingsPage:
         continue
       self.__apply_to_selected_job()
       self.__jobs_applied_to_this_session.append(brief_job_listing.to_dict())
-      if len(self.__jobs_applied_to_this_session) % self.__universal_config.bot_behavior.pause_every_x_jobs == 0:
+      if len(self.__jobs_applied_to_this_session) % self.__quick_settings.bot_behavior.pause_every_x_jobs == 0:
         print("\nPausing to allow user to handle existing tabs before overload.")
         input("\tPress enter to proceed...")
 

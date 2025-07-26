@@ -19,6 +19,7 @@ from services.pages.linkedin_apply_now_page.steppers.linkedin_work_experience_st
 class LinkedinApplyNowPage:
   __driver: uc.Chrome
   __selenium_helper: SeleniumHelper
+  __universal_config: UniversalConfig
   __contact_info_stepper: LinkedinContactInfoStepper
   __home_address_stepper: LinkedinHomeAddressStepper
   __resume_stepper: LinkedinResumeStepper
@@ -30,15 +31,16 @@ class LinkedinApplyNowPage:
     self,
     driver: uc.Chrome,
     selenium_helper: SeleniumHelper,
-    linkedin_config: LinkedinConfig,
-    universal_config: UniversalConfig
+    universal_config: UniversalConfig,
+    linkedin_config: LinkedinConfig
   ):
     self.__driver = driver
     self.__selenium_helper = selenium_helper
+    self.__universal_config = universal_config
     self.__contact_info_stepper = LinkedinContactInfoStepper(
       selenium_helper,
-      linkedin_config,
-      universal_config
+      universal_config,
+      linkedin_config
     )
     self.__home_address_stepper = LinkedinHomeAddressStepper(
       selenium_helper,
@@ -91,6 +93,10 @@ class LinkedinApplyNowPage:
         time.sleep(0.1)
         if self.__some_field_was_left_blank(easy_apply_div):
           input("Some field was left blank -- lets fix that.")
+          return
+        if self.__cover_letter_is_required(easy_apply_div):
+          if self.__universal_config.bot_behavior.ignore_jobs_that_demand_cover_letters:
+            self.__driver.close()
           return
 
   def __is_automation_roadblock(self, easy_apply_div: WebElement) -> bool:
@@ -200,6 +206,13 @@ class LinkedinApplyNowPage:
   def __is_education_stepper(self, easy_apply_div: WebElement) -> bool:
     return self.__selenium_helper.exact_text_is_present(
       "Education",
+      ElementType.SPAN,
+      easy_apply_div
+    )
+
+  def __cover_letter_is_required(self, easy_apply_div: WebElement) -> bool:
+    return self.__selenium_helper.exact_text_is_present(
+      "A cover letter is required",
       ElementType.SPAN,
       easy_apply_div
     )

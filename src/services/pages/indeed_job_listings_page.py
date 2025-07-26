@@ -5,7 +5,8 @@ import undetected_chromedriver as uc
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.common.exceptions import (
-  NoSuchElementException
+  NoSuchElementException,
+  TimeoutException
 )
 from entities.indeed_brief_job_listing import IndeedBriefJobListing
 from entities.indeed_job_listing import IndeedJobListing
@@ -122,7 +123,12 @@ class IndeedJobListingsPage:
   def __open_job_in_new_tab(self, job_listing_li: WebElement) -> None:
     job_listing_link = self.__get_job_listing_link(job_listing_li)
     self.__selenium_helper.open_new_tab()
-    self.__driver.get(job_listing_link)
+    while True:
+      try:
+        self.__driver.get(job_listing_link)
+        break
+      except TimeoutException:
+        logging.warning("Failed to go to: %s -- Trying again...", job_listing_link)
 
   def __wait_for_new_job_tab_to_load(self, timeout=10) -> None:
     start_time = time.time()
@@ -161,35 +167,6 @@ class IndeedJobListingsPage:
     elif self.__is_applied_span():
       return
     raise RuntimeError("Tried to apply to a job, but expected conditions were not met regarding the apply button.")
-  # def __apply_to_visible_job(self) -> None:
-  #   if self.__is_apply_now_button():
-  #     starting_tab_count = len(self.__driver.window_handles)
-  #     while len(self.__driver.window_handles) == starting_tab_count:
-  #       logging.debug("Attempting to click the apply now button...")
-  #       while True:
-  #         try:
-  #           apply_now_button = self.__get_apply_now_button()
-  #           apply_now_button.click()
-  #           break
-  #         except StaleElementReferenceException:
-  #           logging.debug("Apply button reference is stale. Trying again...")
-  #           time.sleep(0.5)
-  #       time.sleep(0.5)
-  #     self.__driver.switch_to.window(self.__driver.window_handles[-1])
-  #     self.__apply_now_page.apply()
-  #     self.__driver.switch_to.window(self.__driver.window_handles[0])
-  #   elif self.__is_apply_on_company_site_span():
-  #     apply_on_company_site_button = self.__get_apply_on_company_site_button()
-  #     while True:
-  #       try:
-  #         apply_on_company_site_button.click()
-  #         break
-  #       except ElementClickInterceptedException:
-  #         logging.debug("Failed to click apply on company site button. Trying again...")
-  #         self.__remove_did_you_apply_popup()
-  #         time.sleep(0.1)
-  #     # Ignore page and allow user to come back later
-  #     self.__driver.switch_to.window(self.__driver.window_handles[0])
 
   def __handle_potential_overload(self) -> None:
     if len(self.__jobs_applied_to_this_session) > 0:
@@ -261,15 +238,19 @@ class IndeedJobListingsPage:
     return self.__current_page_number
 
   def __get_page_buttons_ul(self, timeout=5) -> WebElement:
-    page_buttons_ul_xpath = "/html/body/main/div/div[2]/div/div[5]/div/div[1]/nav/ul"
+    potential_page_buttons_ul_xpaths = [
+      "/html/body/main/div/div[2]/div/div[5]/div/div[1]/nav/ul",
+      "/html/body/main/div/div/div[2]/div/div[5]/div/div[1]/nav/ul"
+    ]
     start_time = time.time()
     while time.time() - start_time < timeout:
-      try:
-        page_buttons_ul = self.__driver.find_element(By.XPATH, page_buttons_ul_xpath)
-        return page_buttons_ul
-      except NoSuchElementException:
-        logging.debug("Failed to find page buttons ul. Trying again...")
-        time.sleep(0.1)
+      for xpath in potential_page_buttons_ul_xpaths:
+        try:
+          page_buttons_ul = self.__driver.find_element(By.XPATH, xpath)
+          return page_buttons_ul
+        except NoSuchElementException:
+          logging.debug("Failed to find page buttons ul. Trying again...")
+          time.sleep(0.1)
     raise NoSuchElementException("Failed to find page buttons ul.")
 
   def __get_job_listing_anchor(self, job_listing_li: WebElement) -> WebElement:

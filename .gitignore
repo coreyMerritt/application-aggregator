@@ -1,5 +1,7 @@
 __pycache__
-config.yml
-.venv
-test.py
 .env
+.venv
+config.yml
+test.py
+email-test.py
+

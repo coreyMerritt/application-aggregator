@@ -121,7 +121,7 @@ class IndeedJobListingsPage:
 
   def __open_job_in_new_tab(self, job_listing_li: WebElement) -> None:
     job_listing_link = self.__get_job_listing_link(job_listing_li)
-    self.__driver.switch_to.new_window('tab')
+    self.__selenium_helper.open_new_tab()
     self.__driver.get(job_listing_link)
 
   def __wait_for_new_job_tab_to_load(self, timeout=10) -> None:
@@ -328,7 +328,7 @@ class IndeedJobListingsPage:
       "Apply on company site",
       ElementType.SPAN
     )
-    apply_now_button = apply_now_span.find_element(By.XPATH, "../..")
+    apply_now_button = apply_now_span.find_element(By.XPATH, "..")
     return apply_now_button
 
   def __go_to_company_site(self) -> None:

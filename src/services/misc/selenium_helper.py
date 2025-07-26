@@ -1,39 +1,59 @@
 import logging
+import random
+import tempfile
 import undetected_chromedriver as uc
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.common.exceptions import NoSuchElementException
 from selenium.common.exceptions import StaleElementReferenceException
-import yaml
+from models.configs.system_config import SystemConfig
 from models.enums.element_type import ElementType
 
 
 class SeleniumHelper:
   __driver: uc.Chrome
+  __system_config: SystemConfig
   __default_page_load_timeout: int
 
-  def __init__(self, driver: uc.Chrome, default_page_load_timeout: int):
-    self.__driver = driver
+  def __init__(
+    self,
+    system_config: SystemConfig,
+    default_page_load_timeout: int
+  ):
+    self.__system_config = system_config
     self.__default_page_load_timeout = default_page_load_timeout
+    self.__driver = self.get_new_driver()
     self.__driver.set_page_load_timeout(default_page_load_timeout)
+
+  def get_driver(self) -> uc.Chrome:
+    return self.__driver
 
   def get_new_driver(self) -> uc.Chrome:
     logging.debug("Getting a new driver...")
-    with open("config.yml", "r", encoding='utf-8') as config_file:
-      config = yaml.safe_load(config_file)
     options = uc.ChromeOptions()
-    options.binary_location = config["browser"]["path"]
+    options.binary_location = self.__system_config.browser.path
+    temp_profile = tempfile.TemporaryDirectory()
+    options.add_argument(f"--user-data-dir={temp_profile.name}")
     options.add_argument("--no-first-run")
     options.add_argument("--no-default-browser-check")
     options.add_argument("--disable-extensions")
-    options.add_argument("--incognito")
+    options.add_argument("--start-maximized")
+    options.add_argument("--disable-popup-blocking")
+    options.add_argument("--force-dark-mode")
+    self.__handle_proxy_configuration(options)
     driver = uc.Chrome(options=options)
     driver.delete_all_cookies()
+    driver.execute_script("window.localStorage.clear();")
+    driver.execute_script("window.sessionStorage.clear();")
     return driver
 
   def set_driver_timeout_to_default(self) -> None:
     self.__driver.set_page_load_timeout(self.__default_page_load_timeout)
+
+  def open_new_tab(self) -> None:
+    self.__driver.execute_script("window.open('about:blank', '_blank');")
+    self.__driver.switch_to.window(self.__driver.window_handles[-1])
 
   def text_is_present(
     self,
@@ -162,3 +182,13 @@ class SeleniumHelper:
       self.__driver.execute_script("arguments[0].checked = true;", checkbox)
     else:
       self.__driver.execute_script("arguments[0].checked = false;", checkbox)
+
+  def __handle_proxy_configuration(self, options: uc.ChromeOptions) -> uc.ChromeOptions:
+    proxies = self.__system_config.proxies
+    proxy_count = len(proxies)
+    if proxy_count == 0:
+      return options
+    # TODO: Probably we can do better than random at some point
+    random_index = random.randint(0, proxy_count - 1)
+    options.add_argument(f"--proxy-server=socks5://{proxies[random_index].host}:{proxies[random_index].port}")
+    return options

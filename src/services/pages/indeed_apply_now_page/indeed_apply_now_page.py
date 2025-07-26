@@ -59,28 +59,21 @@ class IndeedApplyNowPage:
     return "smartapply.indeed.com" in self.__driver.current_url
 
   def apply(self) -> None:
-    RELEVANT_EXPERIENCE_URL = "smartapply.indeed.com/beta/indeedapply/form/resume-module/relevant-experience"
-    RESUME_URL = "smartapply.indeed.com/beta/indeedapply/form/resume"
-    LOCATION_URL = "smartapply.indeed.com/beta/indeedapply/form/profile-location"
-    CONTACT_INFO_URL = "smartapply.indeed.com/beta/indeedapply/form/contact-info"
     POTENTIAL_ALREADY_APPLIED_URL = "smartapply.indeed.com/beta/indeedapply/postresumeapply"
     ALREADY_APPLIED_URL = "smartapply.indeed.com/beta/indeedapply/form/applied"
-    COMMUTE_CHECK_URL = "smartapply.indeed.com/beta/indeedapply/form/commute-check"
     FINISHED_WITH_APPLY_NOW_URL = "smartapply.indeed.com/beta/indeedapply/form/review"
-    VAGUE_QUESTIONS_URL = "smartapply.indeed.com/beta/indeedapply/form/questions-module/questions/1"
-    DEMOGRAPHIC_QUESTIONS_URL = "smartapply.indeed.com/beta/indeedapply/form/demographic-questions/1"
     while self.is_present():
       URL = self.__driver.current_url
-      if RELEVANT_EXPERIENCE_URL in URL:
-        self.__relevant_experience_stepper.resolve(RELEVANT_EXPERIENCE_URL)
-      elif RESUME_URL in URL:
-        self.__resume_stepper.resolve(RESUME_URL)
-      elif LOCATION_URL in URL:
-        self.__location_stepper.resolve(LOCATION_URL)
-      elif CONTACT_INFO_URL in URL:
-        self.__contact_info_stepper.resolve(CONTACT_INFO_URL)
-      elif COMMUTE_CHECK_URL in URL:
-        self.__commute_check_stepper.resolve(COMMUTE_CHECK_URL)
+      if self.__relevant_experience_stepper.is_present():
+        self.__relevant_experience_stepper.resolve()
+      elif self.__resume_stepper.is_present():
+        self.__resume_stepper.resolve()
+      elif self.__location_stepper.is_present():
+        self.__location_stepper.resolve()
+      elif self.__contact_info_stepper.is_present():
+        self.__contact_info_stepper.resolve()
+      elif self.__commute_check_stepper.is_present():
+        self.__commute_check_stepper.resolve()
       elif POTENTIAL_ALREADY_APPLIED_URL in URL:
         IS_GENUINE_ALREADY_APPLIED_PAGE = self.__is_already_applied_page(POTENTIAL_ALREADY_APPLIED_URL)
         if IS_GENUINE_ALREADY_APPLIED_PAGE:
@@ -90,10 +83,7 @@ class IndeedApplyNowPage:
       elif ALREADY_APPLIED_URL in URL:
         self.__driver.close()
         self.__driver.switch_to.window(self.__driver.window_handles[0])
-      elif VAGUE_QUESTIONS_URL in URL:
-        self.__driver.switch_to.window(self.__driver.window_handles[0])
-        return
-      elif DEMOGRAPHIC_QUESTIONS_URL in URL:
+      elif self.__is_automation_roadblock():
         self.__driver.switch_to.window(self.__driver.window_handles[0])
         return
       elif FINISHED_WITH_APPLY_NOW_URL in URL:
@@ -113,6 +103,16 @@ class IndeedApplyNowPage:
         IS_GENUINE_ALREADY_APPLIED_PAGE = False
         break
     return IS_GENUINE_ALREADY_APPLIED_PAGE
+
+  def __is_automation_roadblock(self) -> bool:
+    VAGUE_QUESTIONS_URL = "smartapply.indeed.com/beta/indeedapply/form/questions-module/questions/1"
+    DEMOGRAPHIC_QUESTIONS_URL = "smartapply.indeed.com/beta/indeedapply/form/demographic-questions/1"
+    ADDITIONAL_DOCUMENTS_URL = "smartapply.indeed.com/beta/indeedapply/form/resume-module/additional-documents"
+    return (
+      VAGUE_QUESTIONS_URL in self.__driver.current_url
+      or DEMOGRAPHIC_QUESTIONS_URL in self.__driver.current_url
+      or ADDITIONAL_DOCUMENTS_URL in self.__driver.current_url
+    )
 
   def __scroll_to_bottom(self) -> None:
     self.__driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")

@@ -23,12 +23,16 @@ class IndeedLocationStepper:
     self.__selenium_helper = selenium_helper
     self.__universal_config = universal_config
 
-  def resolve(self, location_url: str) -> None:
+  def is_present(self) -> bool:
+    LOCATION_URL = "smartapply.indeed.com/beta/indeedapply/form/profile-location"
+    return LOCATION_URL in self.__driver.current_url
+
+  def resolve(self) -> None:
     self.__handle_street_address_input()
     self.__handle_city_state_input()
     self.__handle_postal_code_input()
     self.__click_continue_button()
-    while location_url in self.__driver.current_url:
+    while self.is_present():
       logging.debug("Waiting for profile location page to resolve...")
       time.sleep(0.5)
 

@@ -33,5 +33,18 @@ if [[ ! -f "config.yml" ]]; then
   cp config_model.yml config.yml
 fi
 
+# Pull ublock origin -- removing this for now
+#if [[ ! -d packages ]]; then
+#  mkdir -p packages
+#fi
+#latest_url=$(curl -s https://api.github.com/repos/gorhill/uBlock/releases/latest | \
+#  grep "browser_download_url" | grep ".zip" | cut -d '"' -f 4)
+#zip_path="packages/ublock-origin.zip"
+#unpack_dir="packages/ublock-origin"
+
+#curl -L "$latest_url" -o "$zip_path"
+#rm -rf "$unpack_dir"
+#unzip -q "$zip_path" -d "$unpack_dir"
+
 exit 0
 

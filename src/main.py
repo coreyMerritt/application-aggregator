@@ -39,7 +39,8 @@ class Start:
     )
     self.__system_config = SystemConfig(
       browser=config.system.browser,
-      database=config.system.database
+      database=config.system.database,
+      proxies=config.system.proxies
     )
     self.__universal_config = UniversalConfig(
       about_me=config.universal.about_me,
@@ -59,15 +60,17 @@ class Start:
       apply_now_only=config.indeed.apply_now_only,
       email=config.indeed.email
     )
-    options = uc.ChromeOptions()
-    options.binary_location = self.__system_config.browser.path
-    self.__driver = uc.Chrome(options=options)
-    self.__selenium_helper = SeleniumHelper(self.__driver, self.__quick_settings.bot_behavior.default_page_load_timeout)
+    self.__selenium_helper = SeleniumHelper(
+      self.__system_config,
+      self.__quick_settings.bot_behavior.default_page_load_timeout
+    )
+    self.__driver = self.__selenium_helper.get_driver()
+    self.__driver.get("https://icanhazip.com")
     self.__database_manager = DatabaseManager(self.__system_config.database)
 
   def execute(self):
     try:
-      for platform in self.__quick_settings.bot_behavior.apply_order:
+      for platform in self.__quick_settings.bot_behavior.platform_order:
         if platform == "linkedin":
           self.__apply_on_linkedin()
         elif platform == "glassdoor":

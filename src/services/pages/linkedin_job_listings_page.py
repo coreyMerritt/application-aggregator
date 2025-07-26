@@ -246,7 +246,7 @@ class LinkedinJobListingsPage:
   def __apply_in_new_tab(self) -> None:
     logging.debug("Applying in new tab...")
     url = self.__driver.current_url
-    self.__driver.switch_to.new_window('tab')
+    self.__selenium_helper.open_new_tab()
     self.__driver.get(url)
     try:
       apply_button = self.__get_apply_button()

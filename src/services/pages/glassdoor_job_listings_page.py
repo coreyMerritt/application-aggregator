@@ -184,17 +184,14 @@ class GlassdoorJobListingsPage:
     return job_info_div
 
   def __handle_application(self, apply_button_text: str) -> None:
-    if apply_button_text.lower().strip() == "apply now":
-      input(1)
+    if apply_button_text.lower().strip() == "easy apply":
       self.__easy_apply()
       return
-    elif apply_button_text.lower().strip() == "apply on company site":
-      input(2)
+    elif apply_button_text.lower().strip() == "apply on employer site":
       return
     elif apply_button_text.lower().strip() == "applied":
-      input(3)
       return
-    input(apply_button_text)
+    raise RuntimeError(f"Apply button text did not match any expected conditions: {apply_button_text}")
 
   def __easy_apply(self) -> None:
     logging.debug("Executing easy apply...")

@@ -23,10 +23,14 @@ class IndeedRelevantExperienceStepper:
     self.__selenium_helper = selenium_helper
     self.__universal_config = universal_config
 
-  def resolve(self, relevant_experience_url: str) -> None:
+  def is_present(self) -> bool:
+    RELEVANT_EXPERIENCE_URL = "smartapply.indeed.com/beta/indeedapply/form/resume-module/relevant-experience"
+    return RELEVANT_EXPERIENCE_URL in self.__driver.current_url
+
+  def resolve(self) -> None:
     self.__handle_company_name_input()
     self.__handle_job_title_input()
-    while relevant_experience_url in self.__driver.current_url:
+    while self.is_present():
       # This pages really likes to act up, so self.__click_continue_button() needs to be in this loop sadly
       self.__click_continue_button()
       logging.debug("Waiting for relevant experience page to resolve...")

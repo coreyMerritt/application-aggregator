@@ -97,6 +97,7 @@ class LinkedinApplyNowPage:
         if self.__cover_letter_is_required(easy_apply_div):
           if self.__universal_config.bot_behavior.ignore_jobs_that_demand_cover_letters:
             self.__driver.close()
+            self.__driver.switch_to.window(self.__driver.window_handles[0])
           return
 
   def __is_automation_roadblock(self, easy_apply_div: WebElement) -> bool:

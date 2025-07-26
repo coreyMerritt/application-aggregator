@@ -1,12 +1,28 @@
-browser:
-  path: ""  # ex) "/usr/bin/google-chrome"
-database:
-  engine: ""  # postgresql | mysql | mariadb
-  username: ""  # ex) "root"
-  password: ""  # ex) "S0meP@ssword123"
-  host: ""  # ex) "127.0.0.1"
-  port: 0000  # ex) 3306
-  name: ""  # ex) "application-aggregator"
+quick_settings:
+  bot_behavior:
+    platform_order:
+      - "linkedin"
+      - "glassdoor"
+      - "indeed"
+    pause_after_each_platform: true
+    remove_tabs_after_each_platform: true
+    default_page_load_timeout: 30
+    pause_every_x_jobs: 50
+system:
+  browser:
+    path: ""  # ex) "/usr/bin/google-chrome"
+  database:
+    engine: ""  # postgresql | mysql | mariadb
+    username: ""  # ex) "root"
+    password: ""  # ex) "S0meP@ssword123"
+    host: ""  # ex) "127.0.0.1"
+    port: 0000  # ex) 3306
+    name: ""  # ex) "application-aggregator"
+  proxies: [] # Optional -- This only works with SOCKS5 proxies with no auth. (Whitelist your client IP server-side)
+    # - host: "123.123.123.123"
+    #   port: 1234
+    # - host: "somednsname"
+    #   port: 12345
 universal:
   about_me:
     authorized_to_work_in_us: true
@@ -84,7 +100,6 @@ universal:
     links:
       github: ""  # ex) "https://github.com/torvalds"
   bot_behavior:
-    pause_every_x_jobs: 50  # Recommended default
     ignore:
       titles: []
         # - "Customer Support"

@@ -23,12 +23,23 @@ class IndeedResumeStepper:
     self.__selenium_helper = selenium_helper
     self.__universal_config = universal_config
 
-  def resolve(self, resume_url: str) -> None:
-    input("Triggered")
+  def is_present(self) -> bool:
+    RESUME_URL = "smartapply.indeed.com/beta/indeedapply/form/resume"
+    EXCLUSION_URL_1 = "relevant-experience"
+    EXCLUSION_URL_2 = "additional-documents"
+    return (
+      RESUME_URL in self.__driver.current_url
+      and EXCLUSION_URL_1 not in self.__driver.current_url
+      and EXCLUSION_URL_2 not in self.__driver.current_url
+    )
+
+  def resolve(self) -> None:
     if not self.__resume_preview_is_visible():
       self.__select_first_resume()
+    time.sleep(1)
     self.__click_continue_button()
-    while resume_url in self.__driver.current_url and "relevant-experience" not in self.__driver.current_url:
+    while self.is_present():
+      self.__handle_potential_error()
       logging.debug("Waiting for resume page to resolve...")
       time.sleep(0.5)
 
@@ -72,3 +83,12 @@ class IndeedResumeStepper:
         logging.debug("Failed to click continue button. Clicking body then trying again...")
         self.__driver.find_element(By.TAG_NAME, "body").click()
         time.sleep(0.5)
+
+  def __handle_potential_error(self) -> None:
+    SHOULD_TRY_AGAIN = self.__selenium_helper.exact_text_is_present(
+      "There was an error, please try again.",
+      ElementType.DIV
+    )
+    if SHOULD_TRY_AGAIN:
+      self.__click_continue_button()
+      time.sleep(5)

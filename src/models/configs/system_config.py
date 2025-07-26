@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from typing import List
 
 
 @dataclass
@@ -15,6 +16,12 @@ class BrowserConfig:
   path: str = ""
 
 @dataclass
+class ProxyConfig:
+  host: str
+  port: int
+
+@dataclass
 class SystemConfig:
   browser: BrowserConfig = field(default_factory=BrowserConfig)
   database: DatabaseConfig = field(default_factory=DatabaseConfig)
+  proxies: List[ProxyConfig] = field(default_factory=list)

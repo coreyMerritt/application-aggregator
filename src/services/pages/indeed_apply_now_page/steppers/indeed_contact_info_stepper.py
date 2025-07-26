@@ -23,7 +23,11 @@ class IndeedContactInfoStepper:
     self.__selenium_helper = selenium_helper
     self.__universal_config = universal_config
 
-  def resolve(self, contact_info_url: str) -> None:
+  def is_present(self) -> bool:
+    CONTACT_INFO_URL = "smartapply.indeed.com/beta/indeedapply/form/contact-info"
+    return CONTACT_INFO_URL in self.__driver.current_url
+
+  def resolve(self) -> None:
     self.__handle_phone_number_input()
     try:    # Sometimes this input isnt in the form -- seemingly when accessed from glassdoor specifically
       self.__handle_city_state_input()
@@ -32,7 +36,7 @@ class IndeedContactInfoStepper:
     self.__handle_last_name_input()
     self.__handle_first_name_input()
     self.__click_continue_button()
-    while contact_info_url in self.__driver.current_url:
+    while self.is_present():
       logging.debug("Waiting for contact info page to resolve...")
       time.sleep(0.5)
 

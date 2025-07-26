@@ -18,7 +18,11 @@ class IndeedCommuteCheckStepper:
     self.__driver = driver
     self.__selenium_helper = selenium_helper
 
-  def resolve(self, commute_check_url: str) -> None:
+  def is_present(self) -> bool:
+    COMMUTE_CHECK_URL = "smartapply.indeed.com/beta/indeedapply/form/commute-check"
+    return COMMUTE_CHECK_URL in self.__driver.current_url
+
+  def resolve(self) -> None:
     self.__wait_for_continue_appying_span()
     continue_applying_span = self.__selenium_helper.get_element_by_exact_text(
       "Continue applying",
@@ -26,7 +30,7 @@ class IndeedCommuteCheckStepper:
     )
     continue_applying_button = continue_applying_span.find_element(By.XPATH, "..")
     continue_applying_button.click()
-    while commute_check_url in self.__driver.current_url:
+    while self.is_present():
       logging.debug("Waiting for contact info page to resolve...")
       time.sleep(0.5)
 

@@ -65,7 +65,6 @@ class Start:
       self.__quick_settings.bot_behavior.default_page_load_timeout
     )
     self.__driver = self.__selenium_helper.get_driver()
-    self.__driver.get("https://icanhazip.com")
     self.__database_manager = DatabaseManager(self.__system_config.database)
 
   def execute(self):

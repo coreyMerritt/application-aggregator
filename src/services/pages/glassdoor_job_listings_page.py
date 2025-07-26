@@ -221,6 +221,7 @@ class GlassdoorJobListingsPage:
       "Too Many Requests",
       ElementType.H1
     ):
+      # TODO: Implement proxy swap
       input("Heck, rate limited...")
 
   def __is_job_listing(self, element: WebElement) -> bool:

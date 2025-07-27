@@ -1,6 +1,5 @@
 import logging
 import random
-import tempfile
 import undetected_chromedriver as uc
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
@@ -33,8 +32,6 @@ class SeleniumHelper:
     logging.debug("Getting a new driver...")
     options = uc.ChromeOptions()
     options.binary_location = self.__system_config.browser.path
-    temp_profile = tempfile.TemporaryDirectory()
-    options.add_argument(f"--user-data-dir={temp_profile.name}")
     options.add_argument("--no-first-run")
     options.add_argument("--no-default-browser-check")
     options.add_argument("--disable-extensions")

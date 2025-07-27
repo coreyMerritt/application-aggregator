@@ -3,7 +3,11 @@ import time
 import undetected_chromedriver as uc
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
-from selenium.common.exceptions import ElementClickInterceptedException, NoSuchElementException
+from selenium.common.exceptions import (
+  ElementClickInterceptedException,
+  NoSuchElementException,
+  StaleElementReferenceException
+)
 from models.enums.element_type import ElementType
 from models.configs.linkedin_config import LinkedinConfig
 from models.configs.universal_config import UniversalConfig
@@ -11,6 +15,7 @@ from services.misc.selenium_helper import SeleniumHelper
 from services.pages.linkedin_apply_now_page.steppers.linkedin_contact_info_stepper import LinkedinContactInfoStepper
 from services.pages.linkedin_apply_now_page.steppers.linkedin_education_stepper import LinkedinEducationStepper
 from services.pages.linkedin_apply_now_page.steppers.linkedin_home_address_stepper import LinkedinHomeAddressStepper
+from services.pages.linkedin_apply_now_page.steppers.linkedin_privacy_policy_stepper import LinkedinPrivacyPolicyStepper
 from services.pages.linkedin_apply_now_page.steppers.linkedin_resume_stepper import LinkedinResumeStepper
 from services.pages.linkedin_apply_now_page.steppers.linkedin_voluntary_self_identification_stepper import LinkedinVoluntarySelfIdentificationStepper        # pylint: disable=line-too-long
 from services.pages.linkedin_apply_now_page.steppers.linkedin_work_experience_stepper import LinkedinWorkExperienceStepper     # pylint: disable=line-too-long
@@ -20,12 +25,14 @@ class LinkedinApplyNowPage:
   __driver: uc.Chrome
   __selenium_helper: SeleniumHelper
   __universal_config: UniversalConfig
+  __easy_apply_div: WebElement
   __contact_info_stepper: LinkedinContactInfoStepper
   __home_address_stepper: LinkedinHomeAddressStepper
   __resume_stepper: LinkedinResumeStepper
   __voluntary_self_indentification_stepper: LinkedinVoluntarySelfIdentificationStepper
   __work_experience_stepper: LinkedinWorkExperienceStepper
   __education_stepper: LinkedinEducationStepper
+  __privacy_policy_stepper: LinkedinPrivacyPolicyStepper
 
   def __init__(
     self,
@@ -64,58 +71,87 @@ class LinkedinApplyNowPage:
       selenium_helper,
       universal_config
     )
+    self.__privacy_policy_stepper = LinkedinPrivacyPolicyStepper(
+      selenium_helper
+    )
+
+  def is_present(self) -> bool:
+    try:
+      easy_apply_div_xpath = "/html/body/div[4]/div/div"
+      self.__driver.find_element(By.XPATH, easy_apply_div_xpath)
+      return True
+    except NoSuchElementException:
+      return False
 
   def apply(self) -> None:
     logging.debug("Filling out application...")
+    self.__reset_contexts()
+    try:
+      while self.is_present():
+        if self.__contact_info_stepper.is_present():
+          self.__contact_info_stepper.resolve()
+        elif self.__home_address_stepper.is_present():
+          self.__home_address_stepper.resolve()
+        elif self.__resume_stepper.is_present():
+          self.__resume_stepper.resolve()
+        elif self.__voluntary_self_indentification_stepper.is_present():
+          self.__voluntary_self_indentification_stepper.resolve()
+        elif self.__work_experience_stepper.is_present():
+          self.__work_experience_stepper.resolve()
+        elif self.__education_stepper.is_present():
+          self.__education_stepper.resolve()
+        elif self.__privacy_policy_stepper.is_present():
+          self.__privacy_policy_stepper.resolve()
+        if self.__is_automation_roadblock():
+          return
+        elif self.__is_final_stepper():
+          if self.__is_easy_apply_scrollable_div():
+            self.__scroll_to_bottom()
+          return
+        else:
+          self.__continue_stepper()
+          time.sleep(0.1)
+          if self.__some_field_was_left_blank():
+            input("Some field was left blank -- lets fix that.")
+            return
+          if self.__cover_letter_is_required():
+            if self.__universal_config.bot_behavior.ignore_jobs_that_demand_cover_letters:
+              self.__driver.close()
+              self.__driver.switch_to.window(self.__driver.window_handles[0])
+            return
+    except StaleElementReferenceException:
+      logging.debug("StaleElementReferenceException. Querying for new easy_apply_div...")
+      self.__reset_contexts()
+
+  def __reset_contexts(self) -> None:
     easy_apply_div_xpath = "/html/body/div[4]/div/div"
     easy_apply_div = self.__driver.find_element(By.XPATH, easy_apply_div_xpath)
-    while self.__driver.find_element(By.XPATH, easy_apply_div_xpath):
-      if self.__is_contact_info_page(easy_apply_div):
-        self.__contact_info_stepper.resolve(easy_apply_div)
-      elif self.__is_home_address_page(easy_apply_div):
-        self.__home_address_stepper.resolve(easy_apply_div)
-      elif self.__is_resume_page(easy_apply_div):
-        self.__resume_stepper.resolve(easy_apply_div)
-      elif self.__is_voluntary_self_identification_stepper(easy_apply_div):
-        self.__voluntary_self_indentification_stepper.resolve(easy_apply_div)
-      elif self.__is_work_experience_stepper(easy_apply_div):
-        self.__work_experience_stepper.resolve(easy_apply_div)
-      elif self.__is_education_stepper(easy_apply_div):
-        self.__education_stepper.resolve(easy_apply_div)
-      if self.__is_automation_roadblock(easy_apply_div):
-        return
-      elif self.__is_final_stepper(easy_apply_div):
-        if self.__is_easy_apply_scrollable_div():
-          self.__scroll_to_bottom()
-        return
-      else:
-        self.__continue_stepper(easy_apply_div)
-        time.sleep(0.1)
-        if self.__some_field_was_left_blank(easy_apply_div):
-          input("Some field was left blank -- lets fix that.")
-          return
-        if self.__cover_letter_is_required(easy_apply_div):
-          if self.__universal_config.bot_behavior.ignore_jobs_that_demand_cover_letters:
-            self.__driver.close()
-            self.__driver.switch_to.window(self.__driver.window_handles[0])
-          return
+    self.__easy_apply_div = easy_apply_div
+    self.__contact_info_stepper.set_context(easy_apply_div)
+    self.__education_stepper.set_context(easy_apply_div)
+    self.__home_address_stepper.set_context(easy_apply_div)
+    self.__privacy_policy_stepper.set_context(easy_apply_div)
+    self.__resume_stepper.set_context(easy_apply_div)
+    self.__voluntary_self_indentification_stepper.set_context(easy_apply_div)
+    self.__work_experience_stepper.set_context(easy_apply_div)
 
-  def __is_automation_roadblock(self, easy_apply_div: WebElement) -> bool:
+  def __is_automation_roadblock(self) -> bool:
     return (
-      self.__selenium_helper.exact_text_is_present("Additional", ElementType.H3, easy_apply_div)
-      or self.__selenium_helper.exact_text_is_present("Additional Questions", ElementType.H3, easy_apply_div)
+      self.__selenium_helper.exact_text_is_present("Additional", ElementType.H3, self.__easy_apply_div)
+      or self.__selenium_helper.exact_text_is_present("Additional Questions", ElementType.H3, self.__easy_apply_div)
     )
 
-  def __is_final_stepper(self, easy_apply_div: WebElement) -> bool:
+  def __is_final_stepper(self) -> bool:
     return (
-      self.__selenium_helper.exact_text_is_present("Submit application", ElementType.BUTTON, easy_apply_div)
-      or self.__selenium_helper.exact_text_is_present('Review your application', ElementType.H3, easy_apply_div)
+      self.__selenium_helper.exact_text_is_present("Submit application", ElementType.BUTTON, self.__easy_apply_div)
+      or self.__selenium_helper.exact_text_is_present('Review your application', ElementType.H3, self.__easy_apply_div)
     )
 
-  def __continue_stepper(self, easy_apply_div: WebElement) -> None:
+  def __continue_stepper(self) -> None:
+    element_to_search = self.__easy_apply_div
     while True:
       try:
-        next_span = self.__selenium_helper.get_element_by_exact_text("Next", ElementType.SPAN, easy_apply_div)
+        next_span = self.__selenium_helper.get_element_by_exact_text("Next", ElementType.SPAN, element_to_search)
         next_button = next_span.find_element(By.XPATH, "..")
         next_button.click()
         return
@@ -123,10 +159,14 @@ class LinkedinApplyNowPage:
         logging.debug("ElementClickInterceptedException. Trying again...")
         time.sleep(0.1)
       except NoSuchElementException:
-        logging.debug("NoSuchElementException. Trying again...")
-        time.sleep(0.1)
+        if self.__is_job_search_safety_reminder():
+          logging.debug("Found job search safety reminder. Removing...")
+          self.__remove_job_search_safety_reminder()
+        else:
+          logging.debug("NoSuchElementException. Trying again...")
+          time.sleep(0.1)
       try:
-        review_span = self.__selenium_helper.get_element_by_exact_text("Review", ElementType.SPAN, easy_apply_div)
+        review_span = self.__selenium_helper.get_element_by_exact_text("Review", ElementType.SPAN, element_to_search)
         review_button = review_span.find_element(By.XPATH, "..")
         review_button.click()
         return
@@ -134,15 +174,19 @@ class LinkedinApplyNowPage:
         logging.debug("ElementClickInterceptedException. Trying again...")
         time.sleep(0.1)
       except NoSuchElementException:
-        logging.debug("NoSuchElementException. Trying again...")
-        time.sleep(0.1)
+        if self.__is_job_search_safety_reminder():
+          logging.debug("Found job search safety reminder. Removing...")
+          self.__remove_job_search_safety_reminder()
+        else:
+          logging.debug("NoSuchElementException. Trying again...")
+          time.sleep(0.1)
 
-  def __some_field_was_left_blank(self, easy_apply_div: WebElement) -> bool:
+  def __some_field_was_left_blank(self) -> bool:
     try:
       self.__selenium_helper.get_element_by_exact_text(
         "Please enter a valid answer",
         ElementType.SPAN,
-        easy_apply_div
+        self.__easy_apply_div
       )
       return True
     except NoSuchElementException:
@@ -169,51 +213,23 @@ class LinkedinApplyNowPage:
       easy_apply_scrollable_div
     )
 
-  def __is_contact_info_page(self, easy_apply_div: WebElement) -> bool:
-    return self.__selenium_helper.exact_text_is_present(
-      "Contact info",
-      ElementType.H3,
-      easy_apply_div
-    )
-
-  def __is_home_address_page(self, easy_apply_div: WebElement) -> bool:
-    return self.__selenium_helper.exact_text_is_present(
-      "Home address",
-      ElementType.H3,
-      easy_apply_div
-    )
-
-  def __is_resume_page(self, easy_apply_div: WebElement) -> bool:
-    return self.__selenium_helper.exact_text_is_present(
-      "Resume",
-      ElementType.H3,
-      easy_apply_div
-    )
-
-  def __is_voluntary_self_identification_stepper(self, easy_apply_div: WebElement) -> bool:
-    return self.__selenium_helper.exact_text_is_present(
-      "Voluntary self identification",
-      ElementType.H3,
-      easy_apply_div
-    )
-
-  def __is_work_experience_stepper(self, easy_apply_div: WebElement) -> bool:
-    return self.__selenium_helper.exact_text_is_present(
-      "Work experience",
-      ElementType.SPAN,
-      easy_apply_div
-    )
-
-  def __is_education_stepper(self, easy_apply_div: WebElement) -> bool:
-    return self.__selenium_helper.exact_text_is_present(
-      "Education",
-      ElementType.SPAN,
-      easy_apply_div
-    )
-
-  def __cover_letter_is_required(self, easy_apply_div: WebElement) -> bool:
+  def __cover_letter_is_required(self) -> bool:
     return self.__selenium_helper.exact_text_is_present(
       "A cover letter is required",
       ElementType.SPAN,
-      easy_apply_div
+      self.__easy_apply_div
     )
+
+  def __is_job_search_safety_reminder(self) -> bool:
+    return self.__selenium_helper.exact_text_is_present(
+      "Continue applying",
+      ElementType.SPAN
+    )
+
+  def __remove_job_search_safety_reminder(self) -> None:
+    continue_applying_span = self.__selenium_helper.get_element_by_exact_text(
+      "Continue applying",
+      ElementType.SPAN
+    )
+    continue_applying_button = continue_applying_span.find_element(By.XPATH, "..")
+    continue_applying_button.click()

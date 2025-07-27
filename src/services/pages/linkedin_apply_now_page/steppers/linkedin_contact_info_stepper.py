@@ -15,7 +15,7 @@ class LinkedinContactInfoStepper:
   __selenium_helper: SeleniumHelper
   __linkedin_config: LinkedinConfig
   __universal_config: UniversalConfig
-  __easy_apply_div: WebElement
+  __context_element: WebElement
   __resume_stepper: LinkedinResumeStepper
 
   def __init__(
@@ -33,9 +33,17 @@ class LinkedinContactInfoStepper:
       "./div[2]/div/div/form/div/div[2]/div/div[1]"
     )
 
-  def resolve(self, easy_apply_div: WebElement) -> None:
+  def set_context(self, context_element: WebElement) -> None:
+    self.__context_element = context_element
+
+  def is_present(self) -> bool:
+    return self.__selenium_helper.exact_text_is_present(
+      "Contact info",
+      ElementType.H3,
+      self.__context_element
+    )
+  def resolve(self) -> None:
     logging.debug("Handling Contact Info page...")
-    self.__easy_apply_div = easy_apply_div
     if self.__is_first_name_label():
       self.__handle_first_name()
     if self.__is_last_name_label():
@@ -66,16 +74,19 @@ class LinkedinContactInfoStepper:
     if self.__is_us_authorization_question_span():
       self.__handle_us_authorization_question()
     if self.__is_resume_selection_div():
-      self.__resume_stepper.resolve(easy_apply_div)
+      self.__resume_stepper.set_context(self.__context_element)
+      self.__resume_stepper.resolve()
     if self.__is_referral_span():
       self.__handle_referral_question()
+    if self.__is_city_state_zip_label():
+      self.__handle_city_state_zip()
     self.__remove_suggestion_dialogs()
 
   def __is_first_name_label(self) -> bool:
     return self.__selenium_helper.exact_text_is_present(
       "First name",
       ElementType.LABEL,
-      self.__easy_apply_div
+      self.__context_element
     )
 
   def __handle_first_name(self) -> None:
@@ -84,7 +95,7 @@ class LinkedinContactInfoStepper:
     first_name_label = self.__selenium_helper.get_element_by_exact_text(
       "First name",
       ElementType.LABEL,
-      self.__easy_apply_div
+      self.__context_element
     )
     first_name_input = self.__get_input_from_label(first_name_label)
     self.__selenium_helper.write_to_input(first_name, first_name_input)
@@ -93,7 +104,7 @@ class LinkedinContactInfoStepper:
     return self.__selenium_helper.exact_text_is_present(
       "Last name",
       ElementType.LABEL,
-      self.__easy_apply_div
+      self.__context_element
     )
 
   def __handle_last_name(self) -> None:
@@ -102,7 +113,7 @@ class LinkedinContactInfoStepper:
     last_name_label = self.__selenium_helper.get_element_by_exact_text(
       "Last name",
       ElementType.LABEL,
-      self.__easy_apply_div
+      self.__context_element
     )
     last_name_input = self.__get_input_from_label(last_name_label)
     self.__selenium_helper.write_to_input(last_name, last_name_input)
@@ -111,7 +122,7 @@ class LinkedinContactInfoStepper:
     return self.__selenium_helper.exact_text_is_present(
       "Phone country code",
       ElementType.LABEL,
-      self.__easy_apply_div
+      self.__context_element
     )
 
   def __handle_country_code(self) -> None:
@@ -120,19 +131,19 @@ class LinkedinContactInfoStepper:
     phone_number_country_code_span = self.__selenium_helper.get_element_by_exact_text(
       "Phone country code",
       ElementType.SPAN,
-      self.__easy_apply_div
+      self.__context_element
     )
     phone_number_country_code_select = self.__get_select_from_span(phone_number_country_code_span)
     desired_country_option = self.__selenium_helper.get_element_by_exact_text(
       country,
       ElementType.OPTION,
-      self.__easy_apply_div
+      self.__context_element
     )
     phone_number_country_code_select.select_by_visible_text(desired_country_option.text)
     desired_country_option = self.__selenium_helper.get_element_by_exact_text(
       country,
       ElementType.OPTION,
-      self.__easy_apply_div
+      self.__context_element
     )
     desired_country_option.click()
 
@@ -140,7 +151,7 @@ class LinkedinContactInfoStepper:
     return self.__selenium_helper.exact_text_is_present(
       "Mobile phone number",
       ElementType.LABEL,
-      self.__easy_apply_div
+      self.__context_element
     )
 
   def __handle_mobile_phone_number_field(self) -> None:
@@ -148,7 +159,7 @@ class LinkedinContactInfoStepper:
     mobile_phone_number_label = self.__selenium_helper.get_element_by_exact_text(
       "Mobile phone number",
       ElementType.LABEL,
-      self.__easy_apply_div
+      self.__context_element
     )
     mobile_phone_number_input = self.__get_input_from_label(mobile_phone_number_label)
     self.__selenium_helper.write_to_input(phone_number, mobile_phone_number_input)
@@ -157,7 +168,7 @@ class LinkedinContactInfoStepper:
     return self.__selenium_helper.exact_text_is_present(
       "Phone",
       ElementType.LABEL,
-      self.__easy_apply_div
+      self.__context_element
     )
 
   def __handle_phone_field(self) -> None:
@@ -165,7 +176,7 @@ class LinkedinContactInfoStepper:
     phone_label = self.__selenium_helper.get_element_by_exact_text(
       "Phone",
       ElementType.LABEL,
-      self.__easy_apply_div
+      self.__context_element
     )
     phone_input = self.__get_input_from_label(phone_label)
     self.__selenium_helper.write_to_input(phone_number, phone_input)
@@ -174,7 +185,7 @@ class LinkedinContactInfoStepper:
     return self.__selenium_helper.exact_text_is_present(
       "Email address",
       ElementType.LABEL,
-      self.__easy_apply_div
+      self.__context_element
     )
 
   def __handle_email_address(self) -> None:
@@ -183,13 +194,13 @@ class LinkedinContactInfoStepper:
     email_address_span = self.__selenium_helper.get_element_by_exact_text(
       "Email address",
       ElementType.SPAN,
-      self.__easy_apply_div
+      self.__context_element
     )
     email_address_select = self.__get_select_from_span(email_address_span)
     desired_email_address_option = self.__selenium_helper.get_element_by_exact_text(
       email_address,
       ElementType.OPTION,
-      self.__easy_apply_div
+      self.__context_element
     )
     email_address_select.select_by_visible_text(desired_email_address_option.text)
     desired_email_address_option.click()
@@ -198,7 +209,7 @@ class LinkedinContactInfoStepper:
     return self.__selenium_helper.exact_text_is_present(
       "Location (city)",
       ElementType.SPAN,
-      self.__easy_apply_div
+      self.__context_element
     )
 
   def __handle_location(self) -> None:
@@ -207,7 +218,7 @@ class LinkedinContactInfoStepper:
     location_span = self.__selenium_helper.get_element_by_exact_text(
       "Location (city)",
       ElementType.SPAN,
-      self.__easy_apply_div
+      self.__context_element
     )
     location_label = location_span.find_element(By.XPATH, "..")
     location_input = self.__get_input_from_label(location_label)
@@ -219,7 +230,7 @@ class LinkedinContactInfoStepper:
     return self.__selenium_helper.exact_text_is_present(
       "Street Address",
       ElementType.LABEL,
-      self.__easy_apply_div
+      self.__context_element
     )
 
   def __handle_street_address(self) -> None:
@@ -228,7 +239,7 @@ class LinkedinContactInfoStepper:
     street_address_label = self.__selenium_helper.get_element_by_exact_text(
       "Street Address",
       ElementType.LABEL,
-      self.__easy_apply_div
+      self.__context_element
     )
     street_address_input = self.__get_input_from_label(street_address_label)
     self.__selenium_helper.write_to_input(street_address, street_address_input)
@@ -237,7 +248,7 @@ class LinkedinContactInfoStepper:
     return self.__selenium_helper.exact_text_is_present(
       "City",
       ElementType.LABEL,
-      self.__easy_apply_div
+      self.__context_element
     )
 
   def __handle_city(self) -> None:
@@ -246,7 +257,7 @@ class LinkedinContactInfoStepper:
     city_label = self.__selenium_helper.get_element_by_exact_text(
       "City",
       ElementType.LABEL,
-      self.__easy_apply_div
+      self.__context_element
     )
     city_input = self.__get_input_from_label(city_label)
     self.__selenium_helper.write_to_input(city, city_input)
@@ -257,7 +268,7 @@ class LinkedinContactInfoStepper:
     return self.__selenium_helper.exact_text_is_present(
       "State or Region",
       ElementType.LABEL,
-      self.__easy_apply_div
+      self.__context_element
     )
 
   def __handle_state_or_region(self) -> None:
@@ -266,7 +277,7 @@ class LinkedinContactInfoStepper:
     state_or_region_label = self.__selenium_helper.get_element_by_exact_text(
       "State or Region",
       ElementType.LABEL,
-      self.__easy_apply_div
+      self.__context_element
     )
     state_or_region_input = self.__get_input_from_label(state_or_region_label)
     self.__selenium_helper.write_to_input(state, state_or_region_input)
@@ -275,7 +286,7 @@ class LinkedinContactInfoStepper:
     return self.__selenium_helper.exact_text_is_present(
       "Zip or Postal Code",
       ElementType.LABEL,
-      self.__easy_apply_div
+      self.__context_element
     )
 
   def __handle_zip_or_postal_code(self) -> None:
@@ -284,7 +295,7 @@ class LinkedinContactInfoStepper:
     zip_or_postal_code_label = self.__selenium_helper.get_element_by_exact_text(
       "Zip or Postal Code",
       ElementType.LABEL,
-      self.__easy_apply_div
+      self.__context_element
     )
     zip_or_postal_code_input = self.__get_input_from_label(zip_or_postal_code_label)
     self.__selenium_helper.write_to_input(str(postal_code), zip_or_postal_code_input)
@@ -293,7 +304,7 @@ class LinkedinContactInfoStepper:
     return self.__selenium_helper.exact_text_is_present(
       "Country",
       ElementType.SPAN,
-      self.__easy_apply_div
+      self.__context_element
     )
 
   def __handle_country(self) -> None:
@@ -302,7 +313,7 @@ class LinkedinContactInfoStepper:
     country_span = self.__selenium_helper.get_element_by_exact_text(
       "Country",
       ElementType.SPAN,
-      self.__easy_apply_div
+      self.__context_element
     )
     country_select = self.__get_select_from_span(country_span)
     country_select.select_by_visible_text(country)
@@ -311,7 +322,7 @@ class LinkedinContactInfoStepper:
     return self.__selenium_helper.exact_text_is_present(
       "Willing to Relocate",
       ElementType.SPAN,
-      self.__easy_apply_div
+      self.__context_element
     )
 
   def __handle_willing_to_relocate_select(self) -> None:
@@ -320,7 +331,7 @@ class LinkedinContactInfoStepper:
     willing_to_relocate_span = self.__selenium_helper.get_element_by_exact_text(
       "Willing to Relocate",
       ElementType.SPAN,
-      self.__easy_apply_div
+      self.__context_element
     )
     willing_to_relocate_select = self.__get_select_from_span(willing_to_relocate_span)
     if willing_to_relocate:
@@ -332,7 +343,7 @@ class LinkedinContactInfoStepper:
     return self.__selenium_helper.exact_text_is_present(
       "Are you authorized to work in the USA?",
       ElementType.SPAN,
-      self.__easy_apply_div
+      self.__context_element
     )
 
   def __handle_us_authorization_question(self) -> None:
@@ -341,7 +352,7 @@ class LinkedinContactInfoStepper:
     relocation_span = self.__selenium_helper.get_element_by_exact_text(
       "Are you authorized to work in the USA?",
       ElementType.SPAN,
-      self.__easy_apply_div
+      self.__context_element
     )
     relocation_fieldset = relocation_span.find_element(By.XPATH, "../../..")
     if authorized:
@@ -355,14 +366,14 @@ class LinkedinContactInfoStepper:
     return self.__selenium_helper.exact_text_is_present(
       "Be sure to include an updated resume",
       ElementType.SPAN,
-      self.__easy_apply_div
+      self.__context_element
     )
 
   def __is_referral_span(self) -> bool:
     return self.__selenium_helper.exact_text_is_present(
       "Were you referred by anyone to this position?",
       ElementType.SPAN,
-      self.__easy_apply_div
+      self.__context_element
     )
 
   def __handle_referral_question(self) -> None:
@@ -370,7 +381,7 @@ class LinkedinContactInfoStepper:
     referral_span = self.__selenium_helper.get_element_by_exact_text(
       "Were you referred by anyone to this position?",
       ElementType.SPAN,
-      self.__easy_apply_div
+      self.__context_element
     )
     referral_fieldset = referral_span.find_element(By.XPATH, "../../..")
     was_not_referred_label = self.__selenium_helper.get_element_by_exact_text(
@@ -386,22 +397,42 @@ class LinkedinContactInfoStepper:
     return self.__selenium_helper.exact_text_is_present(
       "If Yes, who were you referred by and what is your relationship to them?",
       ElementType.LABEL,
-      self.__easy_apply_div
+      self.__context_element
     )
 
   def __handle_referral_followup_question(self) -> None:
     followup_label = self.__selenium_helper.get_element_by_exact_text(
       "If Yes, who were you referred by and what is your relationship to them?",
       ElementType.LABEL,
-      self.__easy_apply_div
+      self.__context_element
     )
     followup_input = self.__get_input_from_label(followup_label)
     self.__selenium_helper.write_to_input("N/A", followup_input)
 
+  def __is_city_state_zip_label(self) -> bool:
+    return self.__selenium_helper.exact_text_is_present(
+      "Address: City, State & Zip Code",
+      ElementType.LABEL,
+      self.__context_element
+    )
+
+  def __handle_city_state_zip(self) -> None:
+    city = self.__universal_config.about_me.location.city
+    state_code = self.__universal_config.about_me.location.state_code
+    postal_code = self.__universal_config.about_me.location.postal_code
+    city_state_zip = f"{city}, {state_code} {postal_code}"
+    city_state_zip_label = self.__selenium_helper.get_element_by_exact_text(
+      "Address: City, State & Zip Code",
+      ElementType.LABEL,
+      self.__context_element
+    )
+    city_state_zip_input = city_state_zip_label.find_element(By.XPATH, "../input")
+    self.__selenium_helper.write_to_input(city_state_zip, city_state_zip_input)
+
   def __get_input_from_label(self, label: WebElement) -> WebElement:
     input_id = label.get_attribute("for")
     if input_id:
-      input_el = self.__easy_apply_div.find_element(By.ID, input_id)
+      input_el = self.__context_element.find_element(By.ID, input_id)
       return input_el
     raise NoSuchElementException("Invalid label_text.")
 
@@ -409,9 +440,9 @@ class LinkedinContactInfoStepper:
     label = span.find_element(By.XPATH, "..")
     select_id = label.get_attribute("for")
     if select_id:
-      select = self.__easy_apply_div.find_element(By.ID, select_id)
+      select = self.__context_element.find_element(By.ID, select_id)
       return Select(select)
     raise ValueError("Invalid span_text.")
 
   def __remove_suggestion_dialogs(self) -> None:
-    self.__easy_apply_div.click()
+    self.__context_element.click()

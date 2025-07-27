@@ -48,7 +48,10 @@ class LinkedinOrchestrationEngine:
   def apply(self):
     logging.debug("Applying...")
     self.__linkedin_login_page.login()
-    for search_term in self.__universal_config.search.terms.match:
+    query_terms = self.__universal_config.search.terms.match
+    if not query_terms or len(query_terms) == 0:
+      query_terms = [""]
+    for search_term in query_terms:
       self.__go_to_query(search_term)
       self.__linkedin_job_listings_page.apply_to_all_matching_jobs()
 

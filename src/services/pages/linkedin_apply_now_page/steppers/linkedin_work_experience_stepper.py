@@ -14,7 +14,7 @@ class LinkedinWorkExperienceStepper:
   __driver: uc.Chrome
   __selenium_helper: SeleniumHelper
   __universal_config: UniversalConfig
-  __easy_apply_div: WebElement
+  __context_element: WebElement
 
   def __init__(
     self,
@@ -26,8 +26,17 @@ class LinkedinWorkExperienceStepper:
     self.__selenium_helper = selenium_helper
     self.__universal_config = universal_config
 
-  def resolve(self, easy_apply_div: WebElement) -> None:
-    self.__easy_apply_div = easy_apply_div
+  def set_context(self, context_element: WebElement) -> None:
+    self.__context_element = context_element
+
+  def is_present(self) -> bool:
+    return self.__selenium_helper.exact_text_is_present(
+      "Work experience",
+      ElementType.SPAN,
+      self.__context_element
+    )
+
+  def resolve(self) -> None:
     self.__remove_all_work_experience()
     self.__add_all_work_experience()
 
@@ -42,7 +51,7 @@ class LinkedinWorkExperienceStepper:
     return self.__selenium_helper.exact_text_is_present(
       "Remove",
       ElementType.SPAN,
-      self.__easy_apply_div
+      self.__context_element
     )
 
   def __remove_top_work_experience(self) -> None:
@@ -50,7 +59,7 @@ class LinkedinWorkExperienceStepper:
     top_work_experience_remove_span = self.__selenium_helper.get_element_by_exact_text(
       "Remove",
       ElementType.SPAN,
-      self.__easy_apply_div
+      self.__context_element
     )
     top_work_experience_remove_button = top_work_experience_remove_span.find_element(By.XPATH, "..")
     top_work_experience_remove_button.click()
@@ -87,7 +96,7 @@ class LinkedinWorkExperienceStepper:
       add_more_span = self.__selenium_helper.get_element_by_exact_text(
         "Add more",
         ElementType.SPAN,
-        self.__easy_apply_div
+        self.__context_element
       )
       add_more_button = add_more_span.find_element(By.XPATH, "..")
       add_more_button.click()
@@ -104,7 +113,7 @@ class LinkedinWorkExperienceStepper:
     title_label = self.__selenium_helper.get_element_by_exact_text(
       "Your title",
       ElementType.LABEL,
-      self.__easy_apply_div
+      self.__context_element
     )
     title_input = self.__get_input_from_label(title_label)
     self.__selenium_helper.write_to_input(job_title, title_input)
@@ -113,7 +122,7 @@ class LinkedinWorkExperienceStepper:
     company_label = self.__selenium_helper.get_element_by_exact_text(
       "Company",
       ElementType.LABEL,
-      self.__easy_apply_div
+      self.__context_element
     )
     company_input = self.__get_input_from_label(company_label)
     self.__selenium_helper.write_to_input(company, company_input)
@@ -122,13 +131,13 @@ class LinkedinWorkExperienceStepper:
     currently_work_here_label = self.__selenium_helper.get_element_by_exact_text(
       "I currently work here",
       ElementType.LABEL,
-      self.__easy_apply_div
+      self.__context_element
     )
     currently_work_here_label.click()
 
   def __add_start_time(self, start: Date) -> None:
     relative_start_time_fieldset_xpath = "./div[2]/div/div[2]/form/div[1]/div/div[1]/div[3]/div[2]/div/div[1]/fieldset[1]"    # pylint: disable=line-too-long
-    start_time_fieldset = self.__easy_apply_div.find_element(By.XPATH, relative_start_time_fieldset_xpath)
+    start_time_fieldset = self.__context_element.find_element(By.XPATH, relative_start_time_fieldset_xpath)
     relative_start_month_select_xpath = "./div/span[1]/select"
     start_month_select = Select(start_time_fieldset.find_element(By.XPATH, relative_start_month_select_xpath))
     start_month_select.select_by_index(start.month)
@@ -138,7 +147,7 @@ class LinkedinWorkExperienceStepper:
 
   def __add_end_time(self, end: Date) -> None:
     relative_end_time_fieldset_xpath = "./div[2]/div/div[2]/form/div[1]/div/div[1]/div[3]/div[2]/div/div[1]/fieldset[2]"
-    end_time_fieldset = self.__easy_apply_div.find_element(By.XPATH, relative_end_time_fieldset_xpath)
+    end_time_fieldset = self.__context_element.find_element(By.XPATH, relative_end_time_fieldset_xpath)
     relative_end_month_select_xpath = "./div/span[1]/select"
     end_month_select = Select(end_time_fieldset.find_element(By.XPATH, relative_end_month_select_xpath))
     end_month_select.select_by_index(end.month)
@@ -149,7 +158,7 @@ class LinkedinWorkExperienceStepper:
   def __get_input_from_label(self, label: WebElement) -> WebElement:
     input_id = label.get_attribute("for")
     if input_id:
-      input_el = self.__easy_apply_div.find_element(By.ID, input_id)
+      input_el = self.__context_element.find_element(By.ID, input_id)
       return input_el
     raise NoSuchElementException("Invalid label_text.")
 
@@ -157,7 +166,7 @@ class LinkedinWorkExperienceStepper:
     save_span = self.__selenium_helper.get_element_by_exact_text(
       "Save",
       ElementType.SPAN,
-      self.__easy_apply_div
+      self.__context_element
     )
     save_button = save_span.find_element(By.XPATH, "..")
     save_button.click()

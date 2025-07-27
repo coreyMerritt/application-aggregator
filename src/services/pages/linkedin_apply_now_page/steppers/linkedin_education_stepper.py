@@ -15,7 +15,7 @@ class LinkedinEducationStepper:
   __driver: uc.Chrome
   __selenium_helper: SeleniumHelper
   __universal_config: UniversalConfig
-  __easy_apply_div: WebElement
+  __context_element: WebElement
 
   def __init__(
     self,
@@ -27,8 +27,17 @@ class LinkedinEducationStepper:
     self.__selenium_helper = selenium_helper
     self.__universal_config = universal_config
 
-  def resolve(self, easy_apply_div: WebElement) -> None:
-    self.__easy_apply_div = easy_apply_div
+  def set_context(self, context_element: WebElement) -> None:
+    self.__context_element = context_element
+
+  def is_present(self) -> bool:
+    return self.__selenium_helper.exact_text_is_present(
+      "Education",
+      ElementType.SPAN,
+      self.__context_element
+    )
+
+  def resolve(self) -> None:
     self.__remove_all_education()
     self.__add_all_education()
 
@@ -43,14 +52,14 @@ class LinkedinEducationStepper:
     return self.__selenium_helper.exact_text_is_present(
       "Remove",
       ElementType.SPAN,
-      self.__easy_apply_div
+      self.__context_element
     )
 
   def __remove_top_education(self) -> None:
     top_education_remove_span = self.__selenium_helper.get_element_by_exact_text(
       "Remove",
       ElementType.SPAN,
-      self.__easy_apply_div
+      self.__context_element
     )
     top_education_remove_button = top_education_remove_span.find_element(By.XPATH, "..")
     top_education_remove_button.click()
@@ -88,7 +97,7 @@ class LinkedinEducationStepper:
       add_more_span = self.__selenium_helper.get_element_by_exact_text(
         "Add more",
         ElementType.SPAN,
-        self.__easy_apply_div
+        self.__context_element
       )
       add_more_button = add_more_span.find_element(By.XPATH, "..")
       add_more_button.click()
@@ -114,7 +123,7 @@ class LinkedinEducationStepper:
     return self.__selenium_helper.exact_text_is_present(
       "School",
       ElementType.LABEL,
-      self.__easy_apply_div
+      self.__context_element
     )
 
   def __add_school(self, school: str) -> None:
@@ -122,7 +131,7 @@ class LinkedinEducationStepper:
     school_label = self.__selenium_helper.get_element_by_exact_text(
       "School",
       ElementType.LABEL,
-      self.__easy_apply_div
+      self.__context_element
     )
     school_input = school_label.find_element(By.XPATH, "../input")
     self.__selenium_helper.write_to_input(school, school_input)
@@ -131,7 +140,7 @@ class LinkedinEducationStepper:
     return self.__selenium_helper.exact_text_is_present(
       "City",
       ElementType.SPAN,
-      self.__easy_apply_div
+      self.__context_element
     )
 
   def __add_city(self, city: str) -> None:
@@ -139,7 +148,7 @@ class LinkedinEducationStepper:
     city_span = self.__selenium_helper.get_element_by_exact_text(
       "City",
       ElementType.SPAN,
-      self.__easy_apply_div
+      self.__context_element
     )
     city_input = city_span.find_element(By.XPATH, "../../div/input")
     self.__selenium_helper.write_to_input(city, city_input)
@@ -150,7 +159,7 @@ class LinkedinEducationStepper:
     return self.__selenium_helper.exact_text_is_present(
       "Degree",
       ElementType.LABEL,
-      self.__easy_apply_div
+      self.__context_element
     )
 
   def __add_degree_type(self, degree_type: str) -> None:
@@ -158,7 +167,7 @@ class LinkedinEducationStepper:
     degree_label = self.__selenium_helper.get_element_by_exact_text(
       "Degree",
       ElementType.LABEL,
-      self.__easy_apply_div
+      self.__context_element
     )
     if self.__is_degree_type_input(degree_label):
       self.__add_degree_type_via_input(degree_label, degree_type)
@@ -196,7 +205,7 @@ class LinkedinEducationStepper:
     return self.__selenium_helper.exact_text_is_present(
       "Major / Field of study",
       ElementType.LABEL,
-      self.__easy_apply_div
+      self.__context_element
     )
 
   def __add_field_of_study(self, field_of_study: str) -> None:
@@ -204,7 +213,7 @@ class LinkedinEducationStepper:
     field_of_study_label = self.__selenium_helper.get_element_by_exact_text(
       "Major / Field of study",
       ElementType.LABEL,
-      self.__easy_apply_div
+      self.__context_element
     )
     field_of_study_input = field_of_study_label.find_element(By.XPATH, "../input")
     self.__selenium_helper.write_to_input(field_of_study, field_of_study_input)
@@ -213,7 +222,7 @@ class LinkedinEducationStepper:
     return self.__selenium_helper.exact_text_is_present(
       "I currently attend this institution",
       ElementType.LABEL,
-      self.__easy_apply_div
+      self.__context_element
     )
 
   def __click_currently_attending(self) -> None:
@@ -221,14 +230,14 @@ class LinkedinEducationStepper:
     currently_attending_label = self.__selenium_helper.get_element_by_exact_text(
       "I currently attend this institution",
       ElementType.LABEL,
-      self.__easy_apply_div
+      self.__context_element
     )
     currently_attending_label.click()
 
   def __is_start_time_fieldset(self) -> bool:
     relative_start_time_fieldset_xpath = "./div[2]/div/div[2]/form/div[1]/div/div[1]/div[5]/div[2]/div/div[1]/fieldset[1]"    # pylint: disable=line-too-long
     try:
-      self.__easy_apply_div.find_element(By.XPATH, relative_start_time_fieldset_xpath)
+      self.__context_element.find_element(By.XPATH, relative_start_time_fieldset_xpath)
       return True
     except NoSuchElementException:
       return False
@@ -236,7 +245,7 @@ class LinkedinEducationStepper:
   def __add_start_time(self, start: Date) -> None:
     assert self.__is_start_time_fieldset()
     relative_start_time_fieldset_xpath = "./div[2]/div/div[2]/form/div[1]/div/div[1]/div[5]/div[2]/div/div[1]/fieldset[1]"     # pylint: disable=line-too-long
-    start_time_fieldset = self.__easy_apply_div.find_element(By.XPATH, relative_start_time_fieldset_xpath)
+    start_time_fieldset = self.__context_element.find_element(By.XPATH, relative_start_time_fieldset_xpath)
     relative_start_month_select_xpath = "./div/span[1]/select"
     start_month_select = Select(start_time_fieldset.find_element(By.XPATH, relative_start_month_select_xpath))
     start_month_select.select_by_index(start.month)
@@ -247,7 +256,7 @@ class LinkedinEducationStepper:
   def __is_end_time_fieldset(self) -> bool:
     relative_end_time_fieldset_xpath = "./div[2]/div/div[2]/form/div[1]/div/div[1]/div[5]/div[2]/div/div[1]/fieldset[2]"
     try:
-      self.__easy_apply_div.find_element(By.XPATH, relative_end_time_fieldset_xpath)
+      self.__context_element.find_element(By.XPATH, relative_end_time_fieldset_xpath)
       return True
     except NoSuchElementException:
       return False
@@ -255,7 +264,7 @@ class LinkedinEducationStepper:
   def __add_end_time(self, end: Date) -> None:
     assert self.__is_end_time_fieldset()
     relative_end_time_fieldset_xpath = "./div[2]/div/div[2]/form/div[1]/div/div[1]/div[5]/div[2]/div/div[1]/fieldset[2]"
-    end_time_fieldset = self.__easy_apply_div.find_element(By.XPATH, relative_end_time_fieldset_xpath)
+    end_time_fieldset = self.__context_element.find_element(By.XPATH, relative_end_time_fieldset_xpath)
     relative_end_month_select_xpath = "./div/span[1]/select"
     end_month_select = Select(end_time_fieldset.find_element(By.XPATH, relative_end_month_select_xpath))
     end_month_select.select_by_index(end.month)
@@ -267,7 +276,7 @@ class LinkedinEducationStepper:
     save_span = self.__selenium_helper.get_element_by_exact_text(
       "Save",
       ElementType.SPAN,
-      self.__easy_apply_div
+      self.__context_element
     )
     save_button = save_span.find_element(By.XPATH, "..")
     save_button.click()

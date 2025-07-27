@@ -1,7 +1,5 @@
-import traceback
 from bs4 import BeautifulSoup
 from selenium.webdriver.remote.webelement import WebElement
-from selenium.common.exceptions import NoSuchElementException
 from entities.abc_job_listing import JobListing
 from entities.linkedin_brief_job_listing import LinkedinBriefJobListing
 

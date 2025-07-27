@@ -10,7 +10,7 @@ from services.misc.selenium_helper import SeleniumHelper
 class LinkedinResumeStepper:
   __selenium_helper: SeleniumHelper
   __universal_config: UniversalConfig
-  __easy_apply_div: WebElement
+  __context_element: WebElement
   __relative_resume_list_div_xpath: str
 
   def __init__(
@@ -26,8 +26,17 @@ class LinkedinResumeStepper:
     self.__universal_config = universal_config
     self.__relative_resume_list_div_xpath = relative_resume_list_div_xpath
 
-  def resolve(self, easy_apply_div: WebElement) -> None:
-    self.__easy_apply_div = easy_apply_div
+  def set_context(self, context_element: WebElement) -> None:
+    self.__context_element = context_element
+
+  def is_present(self) -> bool:
+    return self.__selenium_helper.exact_text_is_present(
+      "Resume",
+      ElementType.H3,
+      self.__context_element
+    )
+
+  def resolve(self) -> None:
     if self.__is_compensation_label():
       self.__handle_compensation()
     if self.__is_country_label():
@@ -59,7 +68,7 @@ class LinkedinResumeStepper:
     raise RuntimeError("Failed to find a suitable resume to select.")
 
   def __get_resumes_div(self) -> WebElement:
-    resumes_div = self.__easy_apply_div.find_element(By.XPATH, self.__relative_resume_list_div_xpath)
+    resumes_div = self.__context_element.find_element(By.XPATH, self.__relative_resume_list_div_xpath)
     return resumes_div
 
   def __build_expected_resume_name(self) -> str:
@@ -104,7 +113,7 @@ class LinkedinResumeStepper:
     return self.__selenium_helper.exact_text_is_present(
       "What are your annual total compensation requirements?",
       ElementType.LABEL,
-      self.__easy_apply_div
+      self.__context_element
     )
 
   def __handle_compensation(self) -> None:
@@ -115,7 +124,7 @@ class LinkedinResumeStepper:
     compensation_label = self.__selenium_helper.get_element_by_exact_text(
       "What are your annual total compensation requirements?",
       ElementType.LABEL,
-      self.__easy_apply_div
+      self.__context_element
     )
     compensation_input = self.__get_input_from_label(compensation_label)
     self.__selenium_helper.write_to_input(str(expected_compensation), compensation_input)
@@ -124,7 +133,7 @@ class LinkedinResumeStepper:
     return self.__selenium_helper.exact_text_is_present(
       "Country:",
       ElementType.LABEL,
-      self.__easy_apply_div
+      self.__context_element
     )
 
   def __handle_country(self) -> None:
@@ -133,7 +142,7 @@ class LinkedinResumeStepper:
     country_label = self.__selenium_helper.get_element_by_exact_text(
       "Country:",
       ElementType.LABEL,
-      self.__easy_apply_div
+      self.__context_element
     )
     country_input = self.__get_input_from_label(country_label)
     self.__selenium_helper.write_to_input(country, country_input)
@@ -142,7 +151,7 @@ class LinkedinResumeStepper:
     return self.__selenium_helper.exact_text_is_present(
       "Summary",
       ElementType.LABEL,
-      self.__easy_apply_div
+      self.__context_element
     )
 
   def __handle_summary(self) -> None:
@@ -156,7 +165,7 @@ class LinkedinResumeStepper:
     summary_label = self.__selenium_helper.get_element_by_exact_text(
       "Summary",
       ElementType.LABEL,
-      self.__easy_apply_div
+      self.__context_element
     )
     summary_textarea = summary_label.find_element(By.XPATH, "../textarea")
     self.__selenium_helper.write_to_input(summary, summary_textarea)
@@ -165,7 +174,7 @@ class LinkedinResumeStepper:
     return self.__selenium_helper.exact_text_is_present(
       "Authorized/Eligible to work in the US now and in the future?*",
       ElementType.SPAN,
-      self.__easy_apply_div
+      self.__context_element
     )
 
   def __handle_us_authorization_question(self) -> None:
@@ -174,7 +183,7 @@ class LinkedinResumeStepper:
     us_auth_span = self.__selenium_helper.get_element_by_exact_text(
       "Authorized/Eligible to work in the US now and in the future?*",
       ElementType.SPAN,
-      self.__easy_apply_div
+      self.__context_element
     )
     us_auth_select = Select(us_auth_span.find_element(By.XPATH, "../../select"))
     if authorized:
@@ -186,7 +195,7 @@ class LinkedinResumeStepper:
     return self.__selenium_helper.exact_text_is_present(
       "Please provide your GitHub Profile",
       ElementType.LABEL,
-      self.__easy_apply_div
+      self.__context_element
     )
 
   def __handle_github_profile_question(self) -> None:
@@ -195,7 +204,7 @@ class LinkedinResumeStepper:
     github_label = self.__selenium_helper.get_element_by_exact_text(
       "Please provide your GitHub Profile",
       ElementType.LABEL,
-      self.__easy_apply_div
+      self.__context_element
     )
     github_textarea = github_label.find_element(By.XPATH, "../textarea")
     self.__selenium_helper.write_to_input(github_link, github_textarea)
@@ -204,7 +213,7 @@ class LinkedinResumeStepper:
     return self.__selenium_helper.exact_text_is_present(
       "Will you need to relocate for this position?",
       ElementType.SPAN,
-      self.__easy_apply_div
+      self.__context_element
     )
 
   def __handle_relocation_question(self) -> None:
@@ -212,7 +221,7 @@ class LinkedinResumeStepper:
     relocation_span = self.__selenium_helper.get_element_by_exact_text(
       "Will you need to relocate for this position?",
       ElementType.SPAN,
-      self.__easy_apply_div
+      self.__context_element
     )
     relocation_fieldset = relocation_span.find_element(By.XPATH, "../../..")
     if willing_to_relocate:
@@ -226,14 +235,14 @@ class LinkedinResumeStepper:
     return self.__selenium_helper.text_is_present(
       "previously employed by",
       ElementType.LABEL,
-      self.__easy_apply_div
+      self.__context_element
     )
 
   def __handle_vague_previously_employed_by_us_question(self) -> None:
     previously_employed_label = self.__selenium_helper.get_element_by_text(
       "previously employed by",
       ElementType.LABEL,
-      self.__easy_apply_div
+      self.__context_element
     )
     previously_employed_input = previously_employed_label.find_element(By.XPATH, "../input")
     self.__selenium_helper.write_to_input("No", previously_employed_input)
@@ -242,7 +251,7 @@ class LinkedinResumeStepper:
     return self.__selenium_helper.text_is_present(
       "salary requirements",
       ElementType.LABEL,
-      self.__easy_apply_div
+      self.__context_element
     )
 
   def __handle_vague_salary_requirements_question(self) -> None:
@@ -252,7 +261,7 @@ class LinkedinResumeStepper:
     salary_requirements_label = self.__selenium_helper.get_element_by_text(
       "salary requirements",
       ElementType.LABEL,
-      self.__easy_apply_div
+      self.__context_element
     )
     salary_requirements_input = salary_requirements_label.find_element(By.XPATH, "../input")
     self.__selenium_helper.write_to_input(str(expected_compensation), salary_requirements_input)
@@ -260,6 +269,6 @@ class LinkedinResumeStepper:
   def __get_input_from_label(self, label: WebElement) -> WebElement:
     input_id = label.get_attribute("for")
     if input_id:
-      input_el = self.__easy_apply_div.find_element(By.ID, input_id)
+      input_el = self.__context_element.find_element(By.ID, input_id)
       return input_el
     raise NoSuchElementException("Invalid label_text.")

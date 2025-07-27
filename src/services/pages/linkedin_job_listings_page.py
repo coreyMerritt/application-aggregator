@@ -138,11 +138,10 @@ class LinkedinJobListingsPage:
         self.__scroll_into_view(job_listing_li)
         self.__click_job_listing_li(job_listing_li)
       except NoSuchElementException:
-        if self.__selenium_helper.exact_text_is_present(
-          "Something went wrong",
-          ElementType.H2
-        ):
+        if self.__something_went_wrong():
           self.__driver.refresh()
+        if self.__is_rate_limited_page():
+          input("TODO: We're rate limited.")
     raise TimeoutError("Timed out waiting for full job listing to load.")
 
   def __click_job_listing_li(self, job_listing_li: WebElement) -> None:
@@ -313,6 +312,11 @@ class LinkedinJobListingsPage:
       except NoSuchElementException:
         logging.debug("Waiting for job listing ul to load...")
         time.sleep(0.1)
+        if self.__something_went_wrong():
+          logging.debug("Something went wrong. Refreshing and trying again...")
+          self.__driver.refresh()
+        if self.__is_rate_limited_page():
+          input("TODO: We're rate limited.")
     return job_listing_ul
 
   def __get_main_content_div(self, timeout=10) -> WebElement:
@@ -396,3 +400,15 @@ class LinkedinJobListingsPage:
 
   def __scroll_into_view(self, element: WebElement) -> None:
     self.__driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", element)
+
+  def __something_went_wrong(self) -> bool:
+    return self.__selenium_helper.exact_text_is_present(
+      "Something went wrong",
+      ElementType.H2
+    )
+
+  def __is_rate_limited_page(self) -> bool:
+    return self.__selenium_helper.exact_text_is_present(
+      "HTTP ERROR 429",
+      ElementType.DIV
+    )

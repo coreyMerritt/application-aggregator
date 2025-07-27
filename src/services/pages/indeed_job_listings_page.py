@@ -78,14 +78,13 @@ class IndeedJobListingsPage:
       if brief_job_listing is None:
         logging.debug("Skipping a fake job listing / advertisement...")
         continue
-      BRIEF_JOB_SHOULD_BE_IGNORED = brief_job_listing.should_be_ignored(self.__universal_config)
-      if BRIEF_JOB_SHOULD_BE_IGNORED:
+      brief_job_listing.print()
+      if not brief_job_listing.passes_filter_check(self.__universal_config, self.__quick_settings):
         continue
       ALREADY_APPLIED_THIS_SESSION = brief_job_listing.to_dict() in self.__jobs_applied_to_this_session
       if ALREADY_APPLIED_THIS_SESSION:
         logging.info("Ignoring job listing because: we've already applied this session.\n")
         continue
-      brief_job_listing.print()
       self.__open_job_in_new_tab(job_listing_li)
       try:
         self.__wait_for_new_job_tab_to_load()
@@ -95,7 +94,7 @@ class IndeedJobListingsPage:
         self.__driver.switch_to.window(self.__driver.window_handles[0])
         continue
       job_listing = self.__build_job_listing(brief_job_listing)
-      if job_listing.should_be_ignored(self.__universal_config):
+      if not job_listing.passes_filter_check(self.__universal_config, self.__quick_settings):
         self.__driver.close()
         self.__driver.switch_to.window(self.__driver.window_handles[0])
         continue

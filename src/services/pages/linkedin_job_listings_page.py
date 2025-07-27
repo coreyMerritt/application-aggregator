@@ -79,14 +79,14 @@ class LinkedinJobListingsPage:
         return
       brief_job_listing = self.__build_new_brief_job_listing(job_listing_li, int(total_jobs_tried % 26))
       brief_job_listing.print()
-      if brief_job_listing.should_be_ignored(self.__universal_config):
+      if not brief_job_listing.passes_filter_check(self.__universal_config, self.__quick_settings):
         continue
       if brief_job_listing.to_dict() in self.__jobs_applied_to_this_session:
         logging.debug("Ignoring job listing because: we've already applied this session.\n")
         continue
       self.__select_job(job_listing_li)
       job_listing = self.__build_new_job_listing(brief_job_listing)
-      if job_listing.should_be_ignored(self.__universal_config):
+      if not job_listing.passes_filter_check(self.__universal_config, self.__quick_settings):
         continue
       starting_tab_count = len(self.__driver.window_handles)
       try:

@@ -1,6 +1,6 @@
 import logging
-from typing import List
 from entities.abc_brief_job_listing import BriefJobListing
+from models.configs.quick_settings import QuickSettings
 from models.configs.universal_config import UniversalConfig
 
 
@@ -13,13 +13,63 @@ class JobListing(BriefJobListing):
   def set_description(self, description: str) -> None:
     self.__description = description
 
-  def should_be_ignored(self, universal_config: UniversalConfig) -> bool:
+  def passes_filter_check(self, universal_config: UniversalConfig, quick_settings: QuickSettings) -> bool:
+    if quick_settings.bot_behavior.platinum_star_only:
+      if not self._is_gold_star_listing(universal_config):
+        logging.info("Ignoring Job Listing because it is not a gold star.\n")
+        return False
+      else:
+        if self._passes_ignore_filters(universal_config):
+          logging.info("Job Listing passes filter check.\n")
+          return True
+        else:
+          logging.info("Ignoring Job Listing because ignore term was found.\n")
+          return False
+    elif quick_settings.bot_behavior.gold_star_only:
+      if self._is_gold_star_listing(universal_config):
+        logging.info("Job Listing passes because its a gold star.\n")
+        return True
+      else:
+        logging.info("Ignoring Job Listing because it is not a gold star.\n")
+        return False
+    else:
+      if self._is_gold_star_listing(universal_config):
+        logging.info("Job Listing passes because its a gold star.\n")
+        return True
+      else:
+        if self._passes_ignore_filters(universal_config):
+          logging.info("Job Listing passes because it matches no terms in ignore.\n")
+          return True
+        else:
+          logging.info("Ignoring Job Listing because ignore term was found.\n")
+          return False
+
+  def _is_gold_star_listing(self, universal_config: UniversalConfig) -> bool:
+    title = self.get_title().lower().strip()
+    for gold_star_title in universal_config.bot_behavior.gold_star.titles:
+      if self._phrase_is_in_phrase(gold_star_title, title):
+        return True
+    company = self.get_company().lower().strip()
+    for gold_star_company in universal_config.bot_behavior.gold_star.companies:
+      if self._phrase_is_in_phrase(gold_star_company, company):
+        return True
+    location = self.get_location().lower().strip()
+    for gold_star_location in universal_config.bot_behavior.gold_star.locations:
+      if self._phrase_is_in_phrase(gold_star_location, location):
+        return True
+    description = self.get_description().lower().strip()
+    for gold_star_description in universal_config.bot_behavior.gold_star.descriptions:
+      if self._phrase_is_in_phrase(gold_star_description, description):
+        return True
+    return False
+
+  def _passes_ignore_filters(self, universal_config: UniversalConfig) -> bool:
     return (
-      self._title_should_be_ignored(universal_config.bot_behavior.ignore.titles)
-      or self._company_should_be_ignored(universal_config.bot_behavior.ignore.companies)
-      or self._location_should_be_ignored(universal_config.bot_behavior.ignore.locations)
-      or self._pay_should_be_ignored(universal_config.search.salary)
-      or self.__description_should_be_ignored(universal_config.bot_behavior.ignore.descriptions)
+      self._title_is_passable(universal_config)
+      and self._company_is_passable(universal_config)
+      and self._location_is_passable(universal_config)
+      and self._pay_is_passable(universal_config.search.salary)
+      and self._description_is_passable(universal_config)
     )
 
   def print(self) -> None:
@@ -30,7 +80,7 @@ class JobListing(BriefJobListing):
       self.get_location(),
       self.get_min_pay(),
       self.get_max_pay(),
-      self.__description
+      self.get_description()
     )
 
   def to_dict(self) -> dict[str, str | float | None]:
@@ -40,13 +90,13 @@ class JobListing(BriefJobListing):
       "location": self.get_location(),
       "min_pay": self.get_min_pay(),
       "max_pay": self.get_max_pay(),
-      "description": self.__description
+      "description": self.get_description()
     }
 
-  def __description_should_be_ignored(self, descriptions_to_ignore: List[str] | List[List]) -> bool:
-    description = self.__description.lower().strip()
-    for description_to_ignore in descriptions_to_ignore:
+  def _description_is_passable(self, universal_config: UniversalConfig) -> bool:
+    description = self.get_description().lower().strip()
+    for description_to_ignore in universal_config.bot_behavior.ignore.descriptions:
       if self._phrase_is_in_phrase(description_to_ignore, description):
-        logging.info("Ignoring job listing because: %s is in description.\n", description_to_ignore)
-        return True
-    return False
+        logging.info("Found ignore term in description: %s.", description_to_ignore)
+        return False
+    return True

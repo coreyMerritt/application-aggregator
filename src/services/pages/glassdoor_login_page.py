@@ -2,7 +2,7 @@ import logging
 import time
 import undetected_chromedriver as uc
 from selenium.webdriver.common.by import By
-from selenium.common.exceptions import ElementClickInterceptedException, NoSuchElementException
+from selenium.common.exceptions import ElementClickInterceptedException, NoSuchElementException, TimeoutException
 from models.enums.element_type import ElementType
 from models.configs.glassdoor_config import GlassdoorConfig
 from services.misc.selenium_helper import SeleniumHelper
@@ -26,7 +26,11 @@ class GlassdoorLoginPage:
   def login(self) -> None:
     logging.debug("Logging in...")
     base_url = "https://www.glassdoor.com"
-    self.__driver.get(base_url)
+    try:
+      self.__driver.get(base_url)
+    except TimeoutException:
+      logging.debug("GET timed out. Refreshing...")
+      self.__driver.refresh()
     self.__wait_for_email_form()
     email_form_name = "emailForm"
     email_form = self.__driver.find_element(By.NAME, email_form_name)

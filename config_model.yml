@@ -4,6 +4,8 @@ quick_settings:
       - "linkedin"
       - "glassdoor"
       - "indeed"
+    gold_star_only: false
+    platinum_star_only: false
     pause_after_each_platform: true
     remove_tabs_after_each_platform: true
     default_page_load_timeout: 30
@@ -98,8 +100,22 @@ universal:
             month: 00 # ex) 12
             year: 0000  # ex) 2024
     links:
-      github: ""  # ex) "https://github.com/torvalds"
+      github: ""  # ex) "https://github.com/torvalds", can use "N/A" is desired
   bot_behavior:
+    # Ideal jobs keywords -- use sparingly, can collect garbage quick depending on how you're configured
+    gold_star:
+      titles:
+        # - "Some really good job"
+        # - "Wow such title"
+      companies:
+        # - "NASA"
+        # - "That really cool startup"
+      locations:
+        # - "MyIdealCity"
+        # - "MyIdealState"
+      descriptions:
+        # - "10% 401k"
+        # - "bonus"
     ignore:
       titles: []
         # - "Customer Support"
@@ -139,6 +155,7 @@ universal:
         # - "Customer Service"
         # - "COBOL"
     misc:
+      # Some sites consider "1 day" to be UTC 00:00 to present. Recommend 2 or higher for this
       max_age_in_days: 0  # ex) 2
       min_company_rating: 0.0 # ex) 3.0
 glassdoor:

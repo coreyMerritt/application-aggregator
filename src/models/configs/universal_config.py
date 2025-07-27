@@ -68,7 +68,7 @@ class AboutMe:
   education: Education = field(default_factory=Education)
 
 @dataclass
-class Ignore:
+class JobMatchingList:
   titles: List[str] = field(default_factory=list)
   companies: List[str] = field(default_factory=list)
   locations: List[str] = field(default_factory=list)
@@ -78,7 +78,8 @@ class Ignore:
 class BotBehavior:
   ignore_jobs_that_demand_cover_letters: bool = False
   pause_every_x_jobs: int = 50
-  ignore: Ignore = field(default_factory=Ignore)
+  gold_star: JobMatchingList = field(default_factory=JobMatchingList)
+  ignore: JobMatchingList = field(default_factory=JobMatchingList)
 
 @dataclass
 class SearchExperience:

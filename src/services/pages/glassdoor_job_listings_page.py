@@ -4,7 +4,11 @@ from typing import List
 import undetected_chromedriver as uc
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
-from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException
+from selenium.common.exceptions import (
+  ElementClickInterceptedException,
+  NoSuchElementException,
+  StaleElementReferenceException
+)
 from entities.glassdoor_brief_job_listing import GlassdoorBriefJobListing
 from entities.glassdoor_job_listing import GlassdoorJobListing
 from models.configs.quick_settings import QuickSettings
@@ -38,6 +42,12 @@ class GlassdoorJobListingsPage:
     self.__jobs_applied_to_this_session = []
 
   def apply_to_all_matching_jobs(self) -> None:
+    if self.__returned_zero_results():
+      logging.debug("Returned 0 results, skipping query.")
+      return
+    while self.__page_didnt_load_is_present():
+      logging.debug("Waiting for page to load...")
+      time.sleep(0.5)
     i = 0
     while True:
       i += 1
@@ -60,19 +70,23 @@ class GlassdoorJobListingsPage:
         except NoSuchElementException:
           logging.info("Finished with this query. Continuing to next query...")
           return
-        show_more_jobs_button.click()
+        try:
+          show_more_jobs_button.click()
+        except ElementClickInterceptedException:
+          self.__remove_create_job_dialog()
+          show_more_jobs_button.click()
         job_listings_ul = self.__get_job_listings_ul()
         while True:
           try:
             job_listing_li = job_listings_ul.find_element(By.XPATH, f"./li[{i}]")
             break
           except NoSuchElementException:
-            self.__driver.execute_script("window.scrollBy(0, 50);")
+            self.__scroll_down()
       if not self.__is_job_listing(job_listing_li):
         continue
       brief_job_listing = GlassdoorBriefJobListing(job_listing_li)
       brief_job_listing.print()
-      if brief_job_listing.should_be_ignored(self.__universal_config):
+      if not brief_job_listing.passes_filter_check(self.__universal_config, self.__quick_settings):
         continue
       if brief_job_listing.to_dict() in self.__jobs_applied_to_this_session:
         logging.info("Ignoring job listing because: we've already applied this session.\n")
@@ -80,7 +94,7 @@ class GlassdoorJobListingsPage:
       self.__remove_create_job_dialog()
       job_listing_li.click()
       job_listing = self.__build_job_listing(brief_job_listing)
-      if job_listing.should_be_ignored(self.__universal_config):
+      if not job_listing.passes_filter_check(self.__universal_config, self.__quick_settings):
         continue
       self.__apply_to_selected_job()
       self.__jobs_applied_to_this_session.append(brief_job_listing.to_dict())
@@ -124,6 +138,7 @@ class GlassdoorJobListingsPage:
     return job_listings_ul
 
   def __get_show_more_jobs_button(self) -> WebElement:
+    self.__scroll_down(9999)
     try:
       show_more_jobs_span = self.__selenium_helper.get_element_by_exact_text("Show more jobs", ElementType.SPAN)
     except ValueError as e:
@@ -229,3 +244,16 @@ class GlassdoorJobListingsPage:
     result = attr is not None and "jobListing" in attr
     logging.debug("Checked if is job listing -- %s", result)
     return result
+
+  def __returned_zero_results(self) -> bool:
+    search_h1_class = "SearchResultsHeader_jobCount__eHngv"
+    try:
+      search_h1 = self.__driver.find_element(By.CLASS_NAME, search_h1_class)
+      if search_h1.text.lower().strip()[0] == "0":
+        return True
+      return False
+    except NoSuchElementException:
+      return False
+
+  def __scroll_down(self, pixels=50) -> None:
+    self.__driver.execute_script(f"window.scrollBy(0, {pixels});")

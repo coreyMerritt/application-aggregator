@@ -77,7 +77,8 @@ class LinkedinJobListingsPage:
           raise e
         logging.info("No job listings left -- Finished")
         return
-      brief_job_listing = self.__build_new_brief_job_listing(job_listing_li, int(total_jobs_tried % 26))
+      self.__selenium_helper.scroll_into_view(job_listing_li)
+      brief_job_listing = self.__build_new_brief_job_listing(job_listing_li)
       brief_job_listing.print()
       if not brief_job_listing.passes_filter_check(self.__universal_config, self.__quick_settings):
         continue
@@ -115,7 +116,7 @@ class LinkedinJobListingsPage:
   def __handle_incrementors(self, total_jobs_tried: int, job_listing_li_index: int) -> Tuple[int, int]:
     total_jobs_tried += 1
     if total_jobs_tried >= 4:
-      self.__scroll_jobs_ul()
+      self.__selenium_helper.scroll_down(self.__get_job_listings_ul())
     job_listing_li_index = total_jobs_tried % 26
     if job_listing_li_index == 0:
       total_jobs_tried += 1
@@ -125,7 +126,7 @@ class LinkedinJobListingsPage:
   def __select_job(self, job_listing_li: WebElement, timeout=60) -> None:
     previous_job_details_html = self.__get_full_job_details_div().get_attribute("innerHTML")
     assert previous_job_details_html
-    self.__scroll_into_view(job_listing_li)
+    self.__selenium_helper.scroll_into_view(job_listing_li)
     self.__click_job_listing_li(job_listing_li)
     start_time = time.time()
     while time.time() - start_time < timeout:
@@ -135,7 +136,7 @@ class LinkedinJobListingsPage:
         logging.debug("Waiting for full job listing to load...")
         time.sleep(0.5)
       except TimeoutError:
-        self.__scroll_into_view(job_listing_li)
+        self.__selenium_helper.scroll_into_view(job_listing_li)
         self.__click_job_listing_li(job_listing_li)
       except NoSuchElementException:
         if self.__something_went_wrong():
@@ -165,7 +166,7 @@ class LinkedinJobListingsPage:
           return
         except ElementNotInteractableException:
           logging.debug("Failed to click next page span... Scrolling down and trying again...")
-          self.__scroll_jobs_ul()
+          self.__selenium_helper.scroll_down(self.__get_job_listings_ul())
           time.sleep(0.1)
 
   def __apply_to_selected_job(self) -> None:
@@ -255,19 +256,13 @@ class LinkedinJobListingsPage:
     apply_button.click()
     self.__linkedin_apply_now_page.apply()
 
-  def __scroll_jobs_ul(self, pixels=50) -> None:
-    logging.debug("Scrolling jobs url...")
-    job_listing_ul = self.__get_job_listing_ul()
-    self.__driver.execute_script(f"arguments[0].scrollTop = arguments[0].scrollTop + {pixels};", job_listing_ul)
-
-  def __build_new_brief_job_listing(self, job_listing_li: WebElement, debug: int) -> LinkedinBriefJobListing:
+  def __build_new_brief_job_listing(self, job_listing_li: WebElement) -> LinkedinBriefJobListing:
     while True:
       try:
-        print(f"DEBUG: {debug}, if 1, should have gone to next page")
         brief_job_listing = LinkedinBriefJobListing(job_listing_li)
         break
       except NoSuchElementException:
-        self.__scroll_jobs_ul()
+        self.__selenium_helper.scroll_down(self.__get_job_listings_ul())
     return brief_job_listing
 
   def __build_new_job_listing(self, brief_job_listing: LinkedinBriefJobListing, timeout=3) -> LinkedinJobListing:
@@ -297,17 +292,17 @@ class LinkedinJobListingsPage:
 
   def __get_job_listing_li(self, index: int) -> WebElement:
     relative_job_listing_li_xpath = f"./li[{index}]"
-    job_listing_ul = self.__get_job_listing_ul()
-    job_listing_li = job_listing_ul.find_element(By.XPATH, relative_job_listing_li_xpath)
+    job_listings_ul = self.__get_job_listings_ul()
+    job_listing_li = job_listings_ul.find_element(By.XPATH, relative_job_listing_li_xpath)
     return job_listing_li
 
-  def __get_job_listing_ul(self) -> WebElement:
+  def __get_job_listings_ul(self) -> WebElement:
     logging.debug("Getting job listings ul xpath...")
-    relative_job_listing_ul_xpath = "./div[3]/div[3]/div/div[2]/main/div/div[2]/div[1]/ul"
+    relative_job_listings_ul_xpath = "./div[3]/div[3]/div/div[2]/main/div/div[2]/div[1]/ul"
     main_content_div = self.__get_main_content_div()
     while True:
       try:
-        job_listing_ul = main_content_div.find_element(By.XPATH, relative_job_listing_ul_xpath)
+        job_listings_ul = main_content_div.find_element(By.XPATH, relative_job_listings_ul_xpath)
         break
       except NoSuchElementException:
         logging.debug("Waiting for job listing ul to load...")
@@ -317,15 +312,15 @@ class LinkedinJobListingsPage:
           self.__driver.refresh()
         if self.__is_rate_limited_page():
           input("TODO: We're rate limited.")
-    return job_listing_ul
+    return job_listings_ul
 
   def __get_main_content_div(self, timeout=10) -> WebElement:
     self.__wait_for_main_content_div(timeout)
     for i in range(5, 7):
       potential_main_div_xpath = f"/html/body/div[{i}]"
-      potential_job_listing_ul_xpath = f"{potential_main_div_xpath}/div[3]/div[3]/div/div[2]/main/div/div[2]/div[1]/ul"   # pylint: disable=line-too-long
+      potential_job_listings_ul_xpath = f"{potential_main_div_xpath}/div[3]/div[3]/div/div[2]/main/div/div[2]/div[1]/ul"   # pylint: disable=line-too-long
       try:
-        self.__driver.find_element(By.XPATH, potential_job_listing_ul_xpath)
+        self.__driver.find_element(By.XPATH, potential_job_listings_ul_xpath)
         main_content_div = self.__driver.find_element(By.XPATH, potential_main_div_xpath)
       except NoSuchElementException:
         continue
@@ -338,9 +333,9 @@ class LinkedinJobListingsPage:
     while time.time() - start_time < timeout:
       for i in range(5, 7):
         potential_main_div_xpath = f"/html/body/div[{i}]"
-        potential_job_listing_ul_xpath = f"{potential_main_div_xpath}/div[3]/div[3]/div/div[2]/main/div/div[2]/div[1]/ul"   # pylint: disable=line-too-long
+        potential_job_listings_ul_xpath = f"{potential_main_div_xpath}/div[3]/div[3]/div/div[2]/main/div/div[2]/div[1]/ul"   # pylint: disable=line-too-long
         try:
-          self.__driver.find_element(By.XPATH, potential_job_listing_ul_xpath)
+          self.__driver.find_element(By.XPATH, potential_job_listings_ul_xpath)
           main_content_div = self.__driver.find_element(By.XPATH, potential_main_div_xpath)
           if main_content_div:
             return
@@ -348,7 +343,7 @@ class LinkedinJobListingsPage:
           pass
     if self.__on_http_error_page():
       self.__driver.refresh()
-      self.__driver.find_element(By.XPATH, potential_job_listing_ul_xpath)
+      self.__driver.find_element(By.XPATH, potential_job_listings_ul_xpath)
       main_content_div = self.__driver.find_element(By.XPATH, potential_main_div_xpath)
       if main_content_div:
         return
@@ -397,9 +392,6 @@ class LinkedinJobListingsPage:
       continue_applying_button_id = "jobs-apply-button-id"
       continue_applying_button = self.__driver.find_element(By.ID, continue_applying_button_id)
       continue_applying_button.click()
-
-  def __scroll_into_view(self, element: WebElement) -> None:
-    self.__driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", element)
 
   def __something_went_wrong(self) -> bool:
     return self.__selenium_helper.exact_text_is_present(

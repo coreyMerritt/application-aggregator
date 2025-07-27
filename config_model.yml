@@ -6,8 +6,8 @@ quick_settings:
       - "indeed"
     gold_star_only: false
     platinum_star_only: false
-    pause_after_each_platform: true
-    remove_tabs_after_each_platform: true
+    pause_after_each_platform: false
+    remove_tabs_after_each_platform: false
     default_page_load_timeout: 30
     pause_every_x_jobs: 50
 system:

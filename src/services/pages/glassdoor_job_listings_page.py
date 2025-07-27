@@ -1,6 +1,6 @@
 import logging
 import time
-from typing import List
+from typing import List, Optional
 import undetected_chromedriver as uc
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
@@ -52,36 +52,17 @@ class GlassdoorJobListingsPage:
     while True:
       i += 1
       logging.debug("Looping through job listings: %s...", i)
+      job_listing_li = self.__get_job_listing_li(i)
+      if job_listing_li is None:
+        self.__show_more_jobs()
+        time.sleep(1)   # TODO: Lets get a more proper check in here
+        job_listing_li = self.__get_job_listing_li(i)
       try:
-        job_listings_ul = self.__get_job_listings_ul()
-      except NoSuchElementException:
-        query_results_header_xpath = "/html/body/div[4]/div[4]/div[2]/div[1]/div[1]/span/div/h1"
-        query_results_header = self.__driver.find_element(By.XPATH, query_results_header_xpath)
-        query_results_header_text = query_results_header.text
-        if query_results_header_text:
-          assert query_results_header_text[0] == "0"
-          logging.info("Query returned 0 results. Continuing to next query...")
-          return
-      try:
-        job_listing_li = job_listings_ul.find_element(By.XPATH, f"./li[{i}]")
-      except NoSuchElementException:
-        try:
-          show_more_jobs_button = self.__get_show_more_jobs_button()
-        except NoSuchElementException:
-          logging.info("Finished with this query. Continuing to next query...")
-          return
-        try:
-          show_more_jobs_button.click()
-        except ElementClickInterceptedException:
-          self.__remove_create_job_dialog()
-          show_more_jobs_button.click()
-        job_listings_ul = self.__get_job_listings_ul()
-        while True:
-          try:
-            job_listing_li = job_listings_ul.find_element(By.XPATH, f"./li[{i}]")
-            break
-          except NoSuchElementException:
-            self.__scroll_down()
+        assert job_listing_li
+      except AssertionError:
+        logging.info("No job listings remaining. Returning...")
+        return
+      self.__selenium_helper.scroll_into_view(job_listing_li)
       if not self.__is_job_listing(job_listing_li):
         continue
       brief_job_listing = GlassdoorBriefJobListing(job_listing_li)
@@ -133,12 +114,39 @@ class GlassdoorJobListingsPage:
     try_again_button.click()
     self.__wait_for_job_info_div()
 
+  def __show_more_jobs(self) -> None:
+    try:
+      show_more_jobs_button = self.__get_show_more_jobs_button()
+    except NoSuchElementException:
+      logging.info("Finished with this query. Continuing to next query...")
+      return
+    try:
+      show_more_jobs_button.click()
+    except ElementClickInterceptedException:
+      self.__remove_create_job_dialog()
+      show_more_jobs_button.click()
+
   def __get_job_listings_ul(self) -> WebElement:
     job_listings_ul = self.__selenium_helper.get_element_by_aria_label("Jobs List", ElementType.UL)
     return job_listings_ul
 
+  def __get_job_listing_li(self, i: int) -> WebElement | None:
+    job_listings_ul = self.__get_job_listings_ul()
+    tries = 0
+    while True:
+      try:
+        tries += 1
+        job_listing_li = job_listings_ul.find_element(By.XPATH, f"./li[{i}]")
+        return job_listing_li
+      except NoSuchElementException:
+        if tries > 20:
+          return None
+        self.__selenium_helper.scroll_down()
+      except StaleElementReferenceException:
+        job_listings_ul = self.__get_job_listings_ul()
+
   def __get_show_more_jobs_button(self) -> WebElement:
-    self.__scroll_down(9999)
+    self.__selenium_helper.scroll_to_bottom()
     try:
       show_more_jobs_span = self.__selenium_helper.get_element_by_exact_text("Show more jobs", ElementType.SPAN)
     except ValueError as e:
@@ -254,6 +262,3 @@ class GlassdoorJobListingsPage:
       return False
     except NoSuchElementException:
       return False
-
-  def __scroll_down(self, pixels=50) -> None:
-    self.__driver.execute_script(f"window.scrollBy(0, {pixels});")

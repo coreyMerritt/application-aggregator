@@ -1,5 +1,6 @@
 import logging
 import random
+from typing import Optional
 import undetected_chromedriver as uc
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
@@ -179,6 +180,21 @@ class SeleniumHelper:
       self.__driver.execute_script("arguments[0].checked = true;", checkbox)
     else:
       self.__driver.execute_script("arguments[0].checked = false;", checkbox)
+
+  def scroll_down(self, element: WebElement | None = None, pixels=50) -> None:
+    if element:
+      self.__driver.execute_script("arguments[0].scrollBy(0, arguments[1]);", element, pixels)
+    else:
+      self.__driver.execute_script("window.scrollBy(0, arguments[0]);", pixels)
+
+  def scroll_to_bottom(self, element: WebElement | None = None) -> None:
+    if element:
+      self.__driver.execute_script("arguments[0].scrollTo(0, document.body.scrollHeight);", element)
+    else:
+      self.__driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+
+  def scroll_into_view(self, element: WebElement) -> None:
+    self.__driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", element)
 
   def __handle_proxy_configuration(self, options: uc.ChromeOptions) -> uc.ChromeOptions:
     proxies = self.__system_config.proxies

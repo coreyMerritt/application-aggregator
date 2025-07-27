@@ -17,6 +17,7 @@ from services.pages.indeed_apply_now_page.steppers.indeed_resume_stepper import 
 
 class IndeedApplyNowPage:
   __driver: uc.Chrome
+  __selenium_helper: SeleniumHelper
   __relevant_experience_stepper: IndeedRelevantExperienceStepper
   __resume_stepper: IndeedResumeStepper
   __location_stepper: IndeedLocationStepper
@@ -30,6 +31,7 @@ class IndeedApplyNowPage:
     universal_config: UniversalConfig
   ):
     self.__driver = driver
+    self.__selenium_helper = selenium_helper
     self.__relevant_experience_stepper = IndeedRelevantExperienceStepper(
       driver,
       selenium_helper,
@@ -87,7 +89,7 @@ class IndeedApplyNowPage:
         self.__driver.switch_to.window(self.__driver.window_handles[0])
         return
       elif FINISHED_WITH_APPLY_NOW_URL in URL:
-        self.__scroll_to_bottom()
+        self.__selenium_helper.scroll_to_bottom()
         self.__driver.switch_to.window(self.__driver.window_handles[0])
         return
       else:
@@ -113,6 +115,3 @@ class IndeedApplyNowPage:
       or DEMOGRAPHIC_QUESTIONS_URL in self.__driver.current_url
       or ADDITIONAL_DOCUMENTS_URL in self.__driver.current_url
     )
-
-  def __scroll_to_bottom(self) -> None:
-    self.__driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")

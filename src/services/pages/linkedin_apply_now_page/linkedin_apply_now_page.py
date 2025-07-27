@@ -106,7 +106,7 @@ class LinkedinApplyNowPage:
           return
         elif self.__is_final_stepper():
           if self.__is_easy_apply_scrollable_div():
-            self.__scroll_to_bottom()
+            self.__selenium_helper.scroll_to_bottom(self.__get_easy_apply_scrollable_div())
           return
         else:
           self.__continue_stepper()
@@ -205,13 +205,6 @@ class LinkedinApplyNowPage:
     easy_apply_scrollable_div_xpath = "/html/body/div[4]/div/div/div[2]"
     easy_apply_scrollable_div = self.__driver.find_element(By.XPATH, easy_apply_scrollable_div_xpath)
     return easy_apply_scrollable_div
-
-  def __scroll_to_bottom(self) -> None:
-    easy_apply_scrollable_div = self.__get_easy_apply_scrollable_div()
-    self.__driver.execute_script(
-      "arguments[0].scrollTop = arguments[0].scrollHeight;",
-      easy_apply_scrollable_div
-    )
 
   def __cover_letter_is_required(self) -> bool:
     return self.__selenium_helper.exact_text_is_present(

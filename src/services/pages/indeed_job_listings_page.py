@@ -315,4 +315,7 @@ class IndeedJobListingsPage:
     apply_on_company_site_button = self.__get_apply_on_company_site_button()
     company_site_link = apply_on_company_site_button.get_attribute("href")
     assert company_site_link
-    self.__driver.get(company_site_link)
+    try:
+      self.__driver.get(company_site_link)
+    except TimeoutException:
+      logging.warning("Timed out waiting for company website. Proceeding anyway...")

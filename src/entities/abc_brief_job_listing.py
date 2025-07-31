@@ -93,6 +93,12 @@ class BriefJobListing(ABC):
       "max_pay": self.__max_pay
     }
 
+  def to_minimal_dict(self) -> dict[str, str]:
+    return {
+      "title": self.__title,
+      "company": self.__company
+    }
+
   def _is_gold_star_listing(self, universal_config: UniversalConfig) -> bool:
     title = self.__title.lower().strip()
     for gold_star_title in universal_config.bot_behavior.gold_star.titles:

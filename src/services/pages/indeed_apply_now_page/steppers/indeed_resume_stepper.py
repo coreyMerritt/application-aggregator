@@ -39,7 +39,13 @@ class IndeedResumeStepper:
     time.sleep(1)
     self.__click_continue_button()
     while self.is_present():
-      self.__handle_potential_error()
+      if self.__is_please_try_again_error():
+        try:
+          self.__handle_please_try_again_error()
+        except RuntimeError:
+          self.__driver.close()
+          self.__driver.switch_to.window(self.__driver.window_handles[0])
+          return
       logging.debug("Waiting for resume page to resolve...")
       time.sleep(0.5)
 
@@ -84,11 +90,15 @@ class IndeedResumeStepper:
         self.__driver.find_element(By.TAG_NAME, "body").click()
         time.sleep(0.5)
 
-  def __handle_potential_error(self) -> None:
-    SHOULD_TRY_AGAIN = self.__selenium_helper.exact_text_is_present(
+  def __is_please_try_again_error(self) -> bool:
+    return self.__selenium_helper.exact_text_is_present(
       "There was an error, please try again.",
       ElementType.DIV
     )
-    if SHOULD_TRY_AGAIN:
+
+  def __handle_please_try_again_error(self) -> None:
+    if self.__is_please_try_again_error():
       self.__click_continue_button()
       time.sleep(5)
+      if self.__is_please_try_again_error():
+        raise RuntimeError("Something went wrong on Indeed's end.")

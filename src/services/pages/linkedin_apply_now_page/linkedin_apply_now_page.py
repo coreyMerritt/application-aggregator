@@ -111,14 +111,15 @@ class LinkedinApplyNowPage:
         else:
           self.__continue_stepper()
           time.sleep(0.1)
-          if self.__some_field_was_left_blank():
-            input("Some field was left blank -- lets fix that.")
-            return
           if self.__cover_letter_is_required():
             if self.__universal_config.bot_behavior.ignore_jobs_that_demand_cover_letters:
               self.__driver.close()
               self.__driver.switch_to.window(self.__driver.window_handles[0])
             return
+          if self.__some_field_was_left_blank():
+            input("Some field was left blank -- lets fix that.")
+            return
+
     except StaleElementReferenceException:
       logging.debug("StaleElementReferenceException. Querying for new easy_apply_div...")
       self.__reset_contexts()
@@ -207,11 +208,27 @@ class LinkedinApplyNowPage:
     return easy_apply_scrollable_div
 
   def __cover_letter_is_required(self) -> bool:
-    return self.__selenium_helper.exact_text_is_present(
+    if self.__selenium_helper.exact_text_is_present(
       "A cover letter is required",
       ElementType.SPAN,
       self.__easy_apply_div
-    )
+    ):
+      return True
+    try:
+      cover_letter_div = self.__selenium_helper.get_element_by_exact_text(
+        "Cover letter",
+        ElementType.H3,
+        self.__easy_apply_div
+      )
+    except NoSuchElementException:
+      return False
+    if self.__selenium_helper.exact_text_is_present(
+      "Please enter a valid answer",
+      ElementType.SPAN,
+      cover_letter_div
+    ):
+      return True
+    return False
 
   def __is_job_search_safety_reminder(self) -> bool:
     return self.__selenium_helper.exact_text_is_present(

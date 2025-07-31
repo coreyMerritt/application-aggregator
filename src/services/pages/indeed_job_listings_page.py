@@ -25,7 +25,7 @@ class IndeedJobListingsPage:
   __quick_settings: QuickSettings
   __indeed_config: IndeedConfig
   __apply_now_page: IndeedApplyNowPage
-  __jobs_applied_to_this_session: List[dict[str, str | float | None]]
+  __jobs_applied_to_this_session: List[dict[str, str]]
   __current_page_number: int
 
   def __init__(
@@ -81,8 +81,7 @@ class IndeedJobListingsPage:
       brief_job_listing.print()
       if not brief_job_listing.passes_filter_check(self.__universal_config, self.__quick_settings):
         continue
-      ALREADY_APPLIED_THIS_SESSION = brief_job_listing.to_dict() in self.__jobs_applied_to_this_session
-      if ALREADY_APPLIED_THIS_SESSION:
+      if brief_job_listing.to_minimal_dict() in self.__jobs_applied_to_this_session:
         logging.info("Ignoring job listing because: we've already applied this session.\n")
         continue
       self.__open_job_in_new_tab(job_listing_li)
@@ -154,12 +153,12 @@ class IndeedJobListingsPage:
     if self.__is_apply_now_span():
       self.__click_apply_now_button()
       self.__apply_now_page.apply()
-      self.__jobs_applied_to_this_session.append(brief_job_listing.to_dict())
+      self.__jobs_applied_to_this_session.append(brief_job_listing.to_minimal_dict())
       return
     elif self.__is_apply_on_company_site_span():
       if not self.__indeed_config.apply_now_only:
         self.__go_to_company_site()
-        self.__jobs_applied_to_this_session.append(brief_job_listing.to_dict())
+        self.__jobs_applied_to_this_session.append(brief_job_listing.to_minimal_dict())
       else:
         self.__driver.close()
       return

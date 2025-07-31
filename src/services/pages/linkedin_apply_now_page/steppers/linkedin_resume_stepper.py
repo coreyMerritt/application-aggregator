@@ -53,6 +53,8 @@ class LinkedinResumeStepper:
       self.__handle_vague_previously_employed_by_us_question()
     if self.__is_vague_salary_requirements_question():
       self.__handle_vague_salary_requirements_question()
+    if self.__is_vague_education_completed_question():
+      self.__handle_vague_education_completed_question()
     self.__handle_resume()
 
   def __handle_resume(self) -> None:
@@ -265,6 +267,23 @@ class LinkedinResumeStepper:
     )
     salary_requirements_input = salary_requirements_label.find_element(By.XPATH, "../input")
     self.__selenium_helper.write_to_input(str(expected_compensation), salary_requirements_input)
+
+  def __is_vague_education_completed_question(self) -> bool:
+    return self.__selenium_helper.text_is_present(
+      "Highest Level of Education Completed",
+      ElementType.LABEL,
+      self.__context_element
+    )
+
+  def __handle_vague_education_completed_question(self) -> None:
+    degrees = self.__universal_config.about_me.education.degrees
+    education_completed_label = self.__selenium_helper.get_element_by_text(
+      "Highest Level of Education Completed",
+      ElementType.LABEL,
+      self.__context_element
+    )
+    education_completed_input = education_completed_label.find_element(By.XPATH, "../input")
+    self.__selenium_helper.write_to_input(degrees[0].degree_type, education_completed_input)
 
   def __get_input_from_label(self, label: WebElement) -> WebElement:
     input_id = label.get_attribute("for")

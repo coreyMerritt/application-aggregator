@@ -24,7 +24,7 @@ class GlassdoorJobListingsPage:
   __universal_config: UniversalConfig
   __quick_settings: QuickSettings
   __indeed_apply_now_page: IndeedApplyNowPage
-  __jobs_applied_to_this_session: List[dict[str, str | float | None]]
+  __jobs_applied_to_this_session: List[dict[str, str]]
 
   def __init__(
     self,
@@ -69,7 +69,7 @@ class GlassdoorJobListingsPage:
       brief_job_listing.print()
       if not brief_job_listing.passes_filter_check(self.__universal_config, self.__quick_settings):
         continue
-      if brief_job_listing.to_dict() in self.__jobs_applied_to_this_session:
+      if brief_job_listing.to_minimal_dict() in self.__jobs_applied_to_this_session:
         logging.info("Ignoring job listing because: we've already applied this session.\n")
         continue
       self.__remove_create_job_dialog()
@@ -78,7 +78,7 @@ class GlassdoorJobListingsPage:
       if not job_listing.passes_filter_check(self.__universal_config, self.__quick_settings):
         continue
       self.__apply_to_selected_job()
-      self.__jobs_applied_to_this_session.append(brief_job_listing.to_dict())
+      self.__jobs_applied_to_this_session.append(brief_job_listing.to_minimal_dict())
       if len(self.__jobs_applied_to_this_session) % self.__quick_settings.bot_behavior.pause_every_x_jobs == 0:
         print("\nPausing to allow user to handle existing tabs before overload.")
         input("\tPress enter to proceed...")

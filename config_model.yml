@@ -68,6 +68,7 @@ universal:
           month: 00 # ex) 12
           year: 0000  # ex) 2024
     education:
+      # Place your most impressive degree first, if multiple
       degrees:
         - currently_attending: false
           school: ""  # ex) "Western Governor's University"

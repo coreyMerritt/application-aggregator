@@ -323,22 +323,6 @@ class LinkedinJobListingsPage:
     return job_listings_ul
 
   def __get_main_content_div(self, timeout=10) -> WebElement | None:
-    main_content_div = self.__wait_for_main_content_div(timeout)
-    if main_content_div is None:
-      return None
-    for i in range(5, 7):
-      potential_main_div_xpath = f"/html/body/div[{i}]"
-      potential_job_listings_ul_xpath = f"{potential_main_div_xpath}/div[3]/div[3]/div/div[2]/main/div/div[2]/div[1]/ul"   # pylint: disable=line-too-long
-      try:
-        self.__driver.find_element(By.XPATH, potential_job_listings_ul_xpath)
-        main_content_div = self.__driver.find_element(By.XPATH, potential_main_div_xpath)
-      except NoSuchElementException:
-        continue
-      assert main_content_div
-      return main_content_div
-    raise NoSuchElementException("Failed to find main content div.")
-
-  def __wait_for_main_content_div(self, timeout=10) -> WebElement | None:
     start_time = time.time()
     while time.time() - start_time < timeout:
       for i in range(5, 7):
@@ -353,13 +337,11 @@ class LinkedinJobListingsPage:
           time.sleep(0.1)
           if self.__no_matching_jobs_found():
             return None
-    if self.__on_http_error_page():
-      self.__driver.refresh()
-      self.__driver.find_element(By.XPATH, potential_job_listings_ul_xpath)
-      main_content_div = self.__driver.find_element(By.XPATH, potential_main_div_xpath)
-      if main_content_div:
-        return main_content_div
-    raise NoSuchElementException("Failed to find main content div.")
+          if self.__something_went_wrong():
+            return None
+          if self.__on_http_error_page():
+            input("What really is this page??? Is this a 404? 429? something else? confirm and rename")
+            self.__driver.refresh()
 
   def __on_http_error_page(self) -> bool:
     error_code_div_class = "error-code"

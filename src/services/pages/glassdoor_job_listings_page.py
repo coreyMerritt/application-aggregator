@@ -84,17 +84,20 @@ class GlassdoorJobListingsPage:
         input("\tPress enter to proceed...")
 
   def __build_job_listing(self, brief_job_listing: GlassdoorBriefJobListing) -> GlassdoorJobListing:
-    job_info_div = self.__get_job_info_div()
-    try:
-      job_listing = GlassdoorJobListing(brief_job_listing, job_info_div)
-      return job_listing
-    except StaleElementReferenceException:
-      if not self.__job_info_div_is_present():
-        if self.__page_didnt_load_is_present():
-          self.__reload_job_description()
-      job_info_div = self.__get_job_info_div()
-      job_listing = GlassdoorJobListing(brief_job_listing, job_info_div)
-      return job_listing
+    while True:
+      try:
+        job_info_div = self.__get_job_info_div()
+        job_listing = GlassdoorJobListing(brief_job_listing, job_info_div)
+        return job_listing
+      except StaleElementReferenceException:
+        if not self.__job_info_div_is_present():
+          if self.__page_didnt_load_is_present():
+            self.__reload_job_description()
+        job_info_div = self.__get_job_info_div()
+        job_listing = GlassdoorJobListing(brief_job_listing, job_info_div)
+        return job_listing
+      except TimeoutError:
+        self.__driver.refresh()
 
   def __job_info_div_is_present(self) -> bool:
     job_info_div_xpath = "/html/body/div[4]/div[4]/div[2]/div[2]/div/div[1]"

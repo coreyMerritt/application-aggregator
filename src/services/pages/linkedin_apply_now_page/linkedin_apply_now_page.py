@@ -110,7 +110,7 @@ class LinkedinApplyNowPage:
           return
         else:
           self.__continue_stepper()
-          time.sleep(0.1)
+          time.sleep(0.5)
           if self.__cover_letter_is_required():
             if self.__universal_config.bot_behavior.ignore_jobs_that_demand_cover_letters:
               self.__driver.close()
@@ -213,21 +213,26 @@ class LinkedinApplyNowPage:
       ElementType.SPAN,
       self.__easy_apply_div
     ):
+      print("~~~~~~~~1~~~~~~~~")
       return True
     try:
+      print("~~~~~~~~2~~~~~~~~")
       cover_letter_div = self.__selenium_helper.get_element_by_exact_text(
         "Cover letter",
         ElementType.H3,
         self.__easy_apply_div
       )
     except NoSuchElementException:
+      print("~~~~~~~~3~~~~~~~~")
       return False
     if self.__selenium_helper.exact_text_is_present(
       "Please enter a valid answer",
       ElementType.SPAN,
       cover_letter_div
     ):
+      print("~~~~~~~~4~~~~~~~~")
       return True
+    print("~~~~~~~~5~~~~~~~~")
     return False
 
   def __is_job_search_safety_reminder(self) -> bool:

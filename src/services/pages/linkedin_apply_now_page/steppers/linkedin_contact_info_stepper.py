@@ -80,6 +80,8 @@ class LinkedinContactInfoStepper:
       self.__handle_referral_question()
     if self.__is_city_state_zip_label():
       self.__handle_city_state_zip()
+    if self.__is_preferred_name_label():
+      self.__handle_preferred_name()
     self.__remove_suggestion_dialogs()
 
   def __is_first_name_label(self) -> bool:
@@ -428,6 +430,24 @@ class LinkedinContactInfoStepper:
     )
     city_state_zip_input = city_state_zip_label.find_element(By.XPATH, "../input")
     self.__selenium_helper.write_to_input(city_state_zip, city_state_zip_input)
+
+  def __is_preferred_name_label(self) -> bool:
+    return self.__selenium_helper.exact_text_is_present(
+      "Preferred Name",
+      ElementType.LABEL,
+      self.__context_element
+    )
+
+  def __handle_preferred_name(self) -> None:
+    assert self.__is_preferred_name_label()
+    preferred_name = self.__universal_config.about_me.name.first
+    preferred_name_label = self.__selenium_helper.get_element_by_exact_text(
+      "Preferred Name",
+      ElementType.LABEL,
+      self.__context_element
+    )
+    preferred_name_input = preferred_name_label.find_element(By.XPATH, "../input")
+    self.__selenium_helper.write_to_input(preferred_name, preferred_name_input)
 
   def __get_input_from_label(self, label: WebElement) -> WebElement:
     input_id = label.get_attribute("for")

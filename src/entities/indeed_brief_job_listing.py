@@ -1,7 +1,5 @@
-import traceback
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
-from selenium.common.exceptions import NoSuchElementException
 from entities.abc_brief_job_listing import BriefJobListing
 
 
@@ -17,16 +15,5 @@ class IndeedBriefJobListing(BriefJobListing):
     relative_location_div_xpath = "./div/div/div/div/div/div/table/tbody/tr/td/div[2]/div/div[2]"
     relative_location_div = job_listing_li.find_element(By.XPATH, relative_location_div_xpath)
     self.set_location(relative_location_div.text.strip())
-    # relative_pay_h2_xpath = "./div/div/div/div/div/div/table/tbody/tr/td/div[3]/div/h2"
-    # try:
-    #   relative_pay_h2 = job_listing_li.find_element(By.XPATH, relative_pay_h2_xpath)
-    # except NoSuchElementException:
-    #   self.set_pay(None)
-    #   return
-    # pay = relative_pay_h2.text
-    # if pay:
-    #   self.set_pay(pay.strip())
-    # else:
-    #   self.set_pay(None)
     self.set_min_pay(None)
     self.set_max_pay(None)

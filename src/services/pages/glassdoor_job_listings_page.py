@@ -1,6 +1,6 @@
 import logging
 import time
-from typing import List, Optional
+from typing import List
 import undetected_chromedriver as uc
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
@@ -54,12 +54,6 @@ class GlassdoorJobListingsPage:
       logging.debug("Looping through job listings: %s...", i)
       job_listing_li = self.__get_job_listing_li(i)
       if job_listing_li is None:
-        self.__show_more_jobs()
-        time.sleep(1)   # TODO: Lets get a more proper check in here
-        job_listing_li = self.__get_job_listing_li(i)
-      try:
-        assert job_listing_li
-      except AssertionError:
         logging.info("No job listings remaining. Returning...")
         return
       self.__selenium_helper.scroll_into_view(job_listing_li)
@@ -79,9 +73,7 @@ class GlassdoorJobListingsPage:
         continue
       self.__apply_to_selected_job()
       self.__jobs_applied_to_this_session.append(brief_job_listing.to_minimal_dict())
-      if len(self.__jobs_applied_to_this_session) % self.__quick_settings.bot_behavior.pause_every_x_jobs == 0:
-        print("\nPausing to allow user to handle existing tabs before overload.")
-        input("\tPress enter to proceed...")
+      self.__handle_potential_overload()
 
   def __build_job_listing(self, brief_job_listing: GlassdoorBriefJobListing) -> GlassdoorJobListing:
     while True:
@@ -142,11 +134,18 @@ class GlassdoorJobListingsPage:
         job_listing_li = job_listings_ul.find_element(By.XPATH, f"./li[{i}]")
         return job_listing_li
       except NoSuchElementException:
-        if tries > 20:
+        logging.debug("Failed to get job listing li. Trying again...")
+        if tries > 21:
           return None
+        elif tries > 20:
+          self.__show_more_jobs()
+          time.sleep(1)
         self.__selenium_helper.scroll_down()
+        time.sleep(0.1)
       except StaleElementReferenceException:
+        logging.debug("Failed to get job listing li. Trying again...")
         job_listings_ul = self.__get_job_listings_ul()
+        time.sleep(0.1)
 
   def __get_show_more_jobs_button(self) -> WebElement:
     self.__selenium_helper.scroll_to_bottom()
@@ -253,7 +252,7 @@ class GlassdoorJobListingsPage:
   def __is_job_listing(self, element: WebElement) -> bool:
     attr = element.get_attribute("data-test")
     result = attr is not None and "jobListing" in attr
-    logging.debug("Checked if is job listing -- %s", result)
+    logging.debug("Checked if is job listing: %s", result)
     return result
 
   def __returned_zero_results(self) -> bool:
@@ -265,3 +264,13 @@ class GlassdoorJobListingsPage:
       return False
     except NoSuchElementException:
       return False
+
+  def __handle_potential_overload(self) -> None:
+    jobs_open = len(self.__driver.window_handles) - 1
+    pause_every_x_jobs = self.__quick_settings.bot_behavior.pause_every_x_jobs
+    if (
+      jobs_open % pause_every_x_jobs == 0
+      and jobs_open >= pause_every_x_jobs
+    ):
+      print("\nPausing to allow user to handle existing tabs before overload.")
+      input("\tPress enter to proceed...")

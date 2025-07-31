@@ -102,34 +102,7 @@ universal:
             year: 0000  # ex) 2024
     links:
       github: ""  # ex) "https://github.com/torvalds", can use "N/A" is desired
-  bot_behavior:
-    # Ideal jobs keywords -- use sparingly, can collect garbage quick depending on how you're configured
-    gold_star:
-      titles:
-        # - "Some really good job"
-        # - "Wow such title"
-      companies:
-        # - "NASA"
-        # - "That really cool startup"
-      locations:
-        # - "MyIdealCity"
-        # - "MyIdealState"
-      descriptions:
-        # - "10% 401k"
-        # - "bonus"
-    ignore:
-      titles: []
-        # - "Customer Support"
-        # - "Mechanic"
-      companies: []
-        # - "Amazon"
-        # - "Walmart"
-      locations: []
-        # - "Ohio"
-        # - "Hybrid"
-      descriptions: []
-        # - "10+ years of experience"
-        # - "travel"
+  # This is the section that governs search queries, occasionally will be referenced for form info as well
   search:
     experience:
       # These can have dramatic affects on search results.
@@ -159,6 +132,35 @@ universal:
       # Some sites consider "1 day" to be UTC 00:00 to present. Recommend 2 or higher for this
       max_age_in_days: 0  # ex) 2
       min_company_rating: 0.0 # ex) 3.0
+  bot_behavior:
+    # Jobs with these keywords will never be filtered out, regardless of the ignore section.
+    # Use sparingly.
+    gold_star:
+      titles:
+        # - "Some really good job"
+        # - "Wow such title"
+      companies:
+        # - "NASA"
+        # - "That really cool startup"
+      locations:
+        # - "MyIdealCity"
+        # - "MyIdealState"
+      descriptions:
+        # - "10% 401k"
+        # - "bonus"
+    ignore:
+      titles: []
+        # - "Customer Support"
+        # - "Mechanic"
+      companies: []
+        # - "Amazon"
+        # - "Walmart"
+      locations: []
+        # - "Ohio"
+        # - "Hybrid"
+      descriptions: []
+        # - "10+ years of experience"
+        # - "travel"
 glassdoor:
   email: "" # ex) "john.smith@gmail.com" 
   password: ""  # ex) "J0hnP@ssword123"

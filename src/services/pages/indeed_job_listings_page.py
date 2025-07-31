@@ -69,6 +69,7 @@ class IndeedJobListingsPage:
           logging.info("End of job listings.")
           return
       elif job_listing_li_number in INVISIBLE_AD_INDEXES + VISIBLE_AD_INDEXES:
+        logging.debug("Job listing is an ad. Skipping...")
         continue  # Don't try to run against ads
       job_listing_li = self.__get_job_listing_li(job_listing_li_number)
       if job_listing_li is None:
@@ -167,10 +168,14 @@ class IndeedJobListingsPage:
     raise RuntimeError("Tried to apply to a job, but expected conditions were not met regarding the apply button.")
 
   def __handle_potential_overload(self) -> None:
-    if len(self.__jobs_applied_to_this_session) > 0:
-      if len(self.__jobs_applied_to_this_session) % self.__quick_settings.bot_behavior.pause_every_x_jobs == 0:
-        print("\nPausing to allow user to handle existing tabs before overload.")
-        input("\tPress enter to proceed...")
+    jobs_open = len(self.__driver.window_handles) - 1
+    pause_every_x_jobs = self.__quick_settings.bot_behavior.pause_every_x_jobs
+    if (
+      jobs_open % pause_every_x_jobs == 0
+      and jobs_open >= pause_every_x_jobs
+    ):
+      print("\nPausing to allow user to handle existing tabs before overload.")
+      input("\tPress enter to proceed...")
 
   def __is_a_next_page(self) -> bool:
     visible_page_numbers = self.__get_visible_page_numbers()

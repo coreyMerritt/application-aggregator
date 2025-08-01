@@ -74,15 +74,23 @@ class DatabaseManager:
     session.add(rate_limit)
     session.commit()
 
-  def get_rate_limit_time_delta(self, ip_address: str, platform: Platform) -> timedelta:
+  def get_rate_limit_time_delta(self, ip_address: str, platform: Platform | None = None) -> timedelta:
     session = self.get_session()
-    last_rate_limit_from_host = (
-      session.query(RateLimitORM)
-        .filter(RateLimitORM.ip_address == ip_address)
-        .filter(RateLimitORM.platform == platform)
-        .order_by(desc(RateLimitORM.timestamp))
-        .first()
-    )
+    if platform:
+      last_rate_limit_from_host = (
+        session.query(RateLimitORM)
+          .filter(RateLimitORM.ip_address == ip_address)
+          .filter(RateLimitORM.platform == platform)
+          .order_by(desc(RateLimitORM.timestamp))
+          .first()
+      )
+    else:
+      last_rate_limit_from_host = (
+        session.query(RateLimitORM)
+          .filter(RateLimitORM.ip_address == ip_address)
+          .order_by(desc(RateLimitORM.timestamp))
+          .first()
+      )
     if last_rate_limit_from_host is None:
       return timedelta.max
     assert isinstance(last_rate_limit_from_host, RateLimitORM)

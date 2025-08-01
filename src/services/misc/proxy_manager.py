@@ -16,7 +16,7 @@ class ProxyManager:
   def log_rate_limit_block(self, platform: Platform) -> None:
     self.__database_manager.log_rate_limit_block(self.__current_proxy.host, platform)
 
-  def get_best_proxy(self, platform: Platform) -> ProxyConfig | None:
+  def get_best_proxy(self, platform: Platform | None = None) -> ProxyConfig | None:
     greatest_time_delta = {}
     for i, proxy in enumerate(self.__potential_proxies):
       if i == 0:

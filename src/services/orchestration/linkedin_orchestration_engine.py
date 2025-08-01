@@ -5,6 +5,7 @@ from models.configs.linkedin_config import LinkedinConfig
 from models.configs.quick_settings import QuickSettings
 from models.configs.universal_config import UniversalConfig
 from services.misc.database_manager import DatabaseManager
+from services.misc.proxy_manager import ProxyManager
 from services.misc.selenium_helper import SeleniumHelper
 from services.pages.linkedin_login_page import LinkedinLoginPage
 from services.pages.linkedin_job_listings_page import LinkedinJobListingsPage
@@ -27,6 +28,7 @@ class LinkedinOrchestrationEngine:
     universal_config: UniversalConfig,
     quick_settings: QuickSettings,
     linkedin_config: LinkedinConfig,
+    proxy_manager: ProxyManager
   ):
     self.__driver = driver
     self.__linkedin_config = linkedin_config
@@ -42,7 +44,8 @@ class LinkedinOrchestrationEngine:
       database_manager,
       universal_config,
       quick_settings,
-      linkedin_config
+      linkedin_config,
+      proxy_manager
     )
 
   def apply(self):

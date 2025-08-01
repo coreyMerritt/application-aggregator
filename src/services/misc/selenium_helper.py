@@ -1,6 +1,4 @@
 import logging
-import random
-from typing import Optional
 import undetected_chromedriver as uc
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
@@ -9,20 +7,24 @@ from selenium.common.exceptions import NoSuchElementException
 from selenium.common.exceptions import StaleElementReferenceException
 from models.configs.system_config import SystemConfig
 from models.enums.element_type import ElementType
+from services.misc.proxy_manager import ProxyManager
 
 
 class SeleniumHelper:
   __driver: uc.Chrome
   __system_config: SystemConfig
   __default_page_load_timeout: int
+  __proxy_manager: ProxyManager
 
   def __init__(
     self,
     system_config: SystemConfig,
-    default_page_load_timeout: int
+    default_page_load_timeout: int,
+    proxy_manager: ProxyManager
   ):
     self.__system_config = system_config
     self.__default_page_load_timeout = default_page_load_timeout
+    self.__proxy_manager = proxy_manager
     self.__driver = self.get_new_driver()
     self.__driver.set_page_load_timeout(default_page_load_timeout)
 
@@ -197,11 +199,7 @@ class SeleniumHelper:
     self.__driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", element)
 
   def __handle_proxy_configuration(self, options: uc.ChromeOptions) -> uc.ChromeOptions:
-    proxies = self.__system_config.proxies
-    proxy_count = len(proxies)
-    if proxy_count == 0:
-      return options
-    # TODO: Probably we can do better than random at some point
-    random_index = random.randint(0, proxy_count - 1)
-    options.add_argument(f"--proxy-server=socks5://{proxies[random_index].host}:{proxies[random_index].port}")
+    proxy_config = self.__proxy_manager.get_best_proxy()
+    if proxy_config:
+      options.add_argument(f"--proxy-server=socks5://{proxy_config.host}:{proxy_config.port}")
     return options

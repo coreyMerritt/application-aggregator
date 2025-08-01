@@ -13,6 +13,7 @@ from models.configs.system_config import SystemConfig
 from models.configs.quick_settings import QuickSettings
 from models.configs.universal_config import UniversalConfig
 from services.misc.database_manager import DatabaseManager
+from services.misc.proxy_manager import ProxyManager
 from services.misc.selenium_helper import SeleniumHelper
 from services.orchestration.glassdoor_orchestration_engine import GlassdoorOrchestrationEngine
 from services.orchestration.indeed_orchestration_engine import IndeedOrchestrationEngine
@@ -27,6 +28,7 @@ class Start:
   __glassdoor_config: GlassdoorConfig
   __indeed_config: IndeedConfig
   __driver: uc.Chrome
+  __proxy_manager: ProxyManager
   __selenium_helper: SeleniumHelper
   __database_manager: DatabaseManager
 
@@ -60,12 +62,14 @@ class Start:
       apply_now_only=config.indeed.apply_now_only,
       email=config.indeed.email
     )
+    self.__database_manager = DatabaseManager(self.__system_config.database)
+    self.__proxy_manager = ProxyManager(self.__system_config.proxies, self.__database_manager)
     self.__selenium_helper = SeleniumHelper(
       self.__system_config,
-      self.__quick_settings.bot_behavior.default_page_load_timeout
+      self.__quick_settings.bot_behavior.default_page_load_timeout,
+      self.__proxy_manager
     )
     self.__driver = self.__selenium_helper.get_driver()
-    self.__database_manager = DatabaseManager(self.__system_config.database)
 
   def execute(self):
     try:
@@ -140,7 +144,8 @@ class Start:
       self.__database_manager,
       self.__universal_config,
       self.__quick_settings,
-      self.__linkedin_config
+      self.__linkedin_config,
+      self.__proxy_manager
     )
     linkedin_orchestration_engine.apply()
     if self.__quick_settings.bot_behavior.pause_after_each_platform:

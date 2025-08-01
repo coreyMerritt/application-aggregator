@@ -1,5 +1,6 @@
 import logging
 import math
+import sys
 import time
 from typing import List, Tuple
 import undetected_chromedriver as uc
@@ -17,7 +18,9 @@ from models.configs.quick_settings import QuickSettings
 from models.enums.element_type import ElementType
 from models.configs.linkedin_config import LinkedinConfig
 from models.configs.universal_config import UniversalConfig
+from models.enums.platform import Platform
 from services.misc.database_manager import DatabaseManager
+from services.misc.proxy_manager import ProxyManager
 from services.pages.linkedin_apply_now_page.linkedin_apply_now_page import LinkedinApplyNowPage
 from services.misc.selenium_helper import SeleniumHelper
 
@@ -29,6 +32,7 @@ class LinkedinJobListingsPage:
   __quick_settings: QuickSettings
   __database_manager: DatabaseManager
   __linkedin_apply_now_page: LinkedinApplyNowPage
+  __proxy_manager: ProxyManager
   __jobs_applied_to_this_session: List[dict[str, str]]
 
   def __init__(
@@ -38,7 +42,8 @@ class LinkedinJobListingsPage:
     database_manager: DatabaseManager,
     universal_config: UniversalConfig,
     quick_settings: QuickSettings,
-    linkedin_config: LinkedinConfig
+    linkedin_config: LinkedinConfig,
+    proxy_manager: ProxyManager
   ):
     self.__driver = driver
     self.__selenium_helper = selenium_helper
@@ -51,6 +56,7 @@ class LinkedinJobListingsPage:
       universal_config,
       linkedin_config
     )
+    self.__proxy_manager = proxy_manager
     self.__jobs_applied_to_this_session = []
 
   def apply_to_all_matching_jobs(self) -> None:
@@ -93,7 +99,7 @@ class LinkedinJobListingsPage:
         self.__universal_config,
         brief_job_listing,
         self.__driver.current_url,
-        "Linkedin"
+        Platform.LINKEDIN
       )
       self.__handle_potential_overload()
 
@@ -160,6 +166,8 @@ class LinkedinJobListingsPage:
     apply_button_text = apply_button.text
     assert apply_button_text
     apply_button_text = apply_button_text.lower().strip()
+    for _ in range(30):   # TODO: Debugging
+      print(f"apply_button_text.lower(): {apply_button_text.lower()}")
     application_is_on_linkedin = apply_button_text.lower() == "easy apply"
     if application_is_on_linkedin:
       self.__apply_in_new_tab()
@@ -384,7 +392,10 @@ class LinkedinJobListingsPage:
       return False
 
   def __handle_rate_limited_page(self) -> None:
-    pass # TODO
+    # TODO: Still brainstorming how to properly handle this
+    self.__proxy_manager.log_rate_limit_block(Platform.LINKEDIN)
+    input("Rate limited. :( Finish what's available and start again...")
+    sys.exit(0)
 
   def __handle_potential_overload(self) -> None:
     jobs_open = len(self.__driver.window_handles) - 1

@@ -131,7 +131,12 @@ class Start:
       self.__universal_config,
       self.__quick_settings,
       self.__glassdoor_config,
-      IndeedApplyNowPage(self.__driver, self.__selenium_helper, self.__universal_config)
+      IndeedApplyNowPage(
+        self.__driver,
+        self.__selenium_helper,
+        self.__universal_config,
+        self.__quick_settings
+      )
     )
     glassdoor_orchestration_engine.apply()
     if self.__quick_settings.bot_behavior.pause_after_each_platform:

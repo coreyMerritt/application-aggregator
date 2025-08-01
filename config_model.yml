@@ -6,6 +6,7 @@ quick_settings:
       - "indeed"
     gold_star_only: false
     platinum_star_only: false
+    pause_on_unknown_stepper: false
     pause_after_each_platform: false
     remove_tabs_after_each_platform: false
     default_page_load_timeout: 30

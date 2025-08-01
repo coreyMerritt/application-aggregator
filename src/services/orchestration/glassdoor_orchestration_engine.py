@@ -1,9 +1,11 @@
 import logging
+import time
 import undetected_chromedriver as uc
 from selenium.common.exceptions import TimeoutException
 from models.configs.glassdoor_config import GlassdoorConfig
 from models.configs.quick_settings import QuickSettings
 from models.configs.universal_config import UniversalConfig
+from models.enums.element_type import ElementType
 from services.query_url_builders.glassdoor_query_url_builder import GlassdoorQueryUrlBuilder
 from services.misc.selenium_helper import SeleniumHelper
 from services.pages.indeed_apply_now_page.indeed_apply_now_page import IndeedApplyNowPage
@@ -13,6 +15,7 @@ from services.pages.glassdoor_job_listings_page import GlassdoorJobListingsPage
 
 class GlassdoorOrchestrationEngine:
   __driver: uc.Chrome
+  __selenium_helper: SeleniumHelper
   __universal_config: UniversalConfig
   __glassdoor_login_page: GlassdoorLoginPage
   __glassdoor_job_listings_page: GlassdoorJobListingsPage
@@ -27,6 +30,7 @@ class GlassdoorOrchestrationEngine:
     indeed_apply_now_page: IndeedApplyNowPage
   ):
     self.__driver = driver
+    self.__selenium_helper = selenium_helper
     self.__universal_config = universal_config
     self.__glassdoor_login_page = GlassdoorLoginPage(driver, selenium_helper, glassdoor_config)
     self.__glassdoor_job_listings_page = GlassdoorJobListingsPage(
@@ -39,6 +43,7 @@ class GlassdoorOrchestrationEngine:
 
   def apply(self):
     logging.debug("Applying on Glassdoor...")
+    self.__wait_for_human_verification_page()
     self.__glassdoor_login_page.login()
     search_terms = self.__universal_config.search.terms.match
     for search_term in search_terms:
@@ -46,6 +51,14 @@ class GlassdoorOrchestrationEngine:
       query_url = query_builder.build(search_term)
       self.__go_to_query_url(query_url)
       self.__glassdoor_job_listings_page.apply_to_all_matching_jobs()
+
+  def __wait_for_human_verification_page(self) -> None:
+    while self.__selenium_helper.exact_text_is_present(
+      "Help Us Protect Glassdoor",
+      ElementType.H1
+    ):
+      logging.info("Waiting for user to solve human verification page...")
+      time.sleep(0.5)
 
   def __go_to_query_url(self, url: str) -> None:
     logging.debug("Going to query url: %s...", url)

@@ -8,6 +8,7 @@ from selenium.common.exceptions import (
   NoSuchElementException,
   StaleElementReferenceException
 )
+from models.configs.quick_settings import QuickSettings
 from models.enums.element_type import ElementType
 from models.configs.linkedin_config import LinkedinConfig
 from models.configs.universal_config import UniversalConfig
@@ -24,7 +25,7 @@ from services.pages.linkedin_apply_now_page.steppers.linkedin_work_experience_st
 class LinkedinApplyNowPage:
   __driver: uc.Chrome
   __selenium_helper: SeleniumHelper
-  __universal_config: UniversalConfig
+  __quick_settings: QuickSettings
   __easy_apply_div: WebElement
   __contact_info_stepper: LinkedinContactInfoStepper
   __home_address_stepper: LinkedinHomeAddressStepper
@@ -38,13 +39,15 @@ class LinkedinApplyNowPage:
     self,
     driver: uc.Chrome,
     selenium_helper: SeleniumHelper,
+    quick_settings: QuickSettings,
     universal_config: UniversalConfig,
     linkedin_config: LinkedinConfig
   ):
     self.__driver = driver
     self.__selenium_helper = selenium_helper
-    self.__universal_config = universal_config
+    self.__quick_settings = quick_settings
     self.__contact_info_stepper = LinkedinContactInfoStepper(
+      driver,
       selenium_helper,
       universal_config,
       linkedin_config
@@ -54,6 +57,7 @@ class LinkedinApplyNowPage:
       universal_config
     )
     self.__resume_stepper = LinkedinResumeStepper(
+      driver,
       selenium_helper,
       universal_config
     )
@@ -88,6 +92,7 @@ class LinkedinApplyNowPage:
     self.__reset_contexts()
     try:
       while self.is_present():
+        self.__wait_for_some_stepper()
         if self.__contact_info_stepper.is_present():
           self.__contact_info_stepper.resolve()
         elif self.__home_address_stepper.is_present():
@@ -111,18 +116,32 @@ class LinkedinApplyNowPage:
         else:
           self.__continue_stepper()
           time.sleep(0.5)
-          if self.__cover_letter_is_required():
-            if self.__universal_config.bot_behavior.ignore_jobs_that_demand_cover_letters:
-              self.__driver.close()
-              self.__driver.switch_to.window(self.__driver.window_handles[0])
-            return
           if self.__some_field_was_left_blank():
-            input("Some field was left blank -- lets fix that.")
-            return
+            if self.__quick_settings.bot_behavior.pause_on_unknown_stepper:
+              input("Unknown stepper found. Press enter to continue...")
+          return
 
     except StaleElementReferenceException:
       logging.debug("StaleElementReferenceException. Querying for new easy_apply_div...")
       self.__reset_contexts()
+
+  def __wait_for_some_stepper(self) -> None:
+    while True:
+      if self.__selenium_helper.exact_text_is_present(
+        "Submitting this application won’t change your LinkedIn profile.",
+        ElementType.PARAGRAPH,
+        self.__easy_apply_div
+      ):
+        time.sleep(0.1)
+        return
+      if self.__is_final_stepper():
+        time.sleep(0.1)
+        return
+      if self.__is_job_search_safety_reminder():
+        logging.debug("Found job search safety reminder. Removing...")
+        self.__remove_job_search_safety_reminder()
+      logging.debug("Waiting for stepper to load...")
+      time.sleep(0.1)
 
   def __reset_contexts(self) -> None:
     easy_apply_div_xpath = "/html/body/div[4]/div/div"
@@ -183,13 +202,12 @@ class LinkedinApplyNowPage:
           time.sleep(0.1)
 
   def __some_field_was_left_blank(self) -> bool:
+    error_message_class = "artdeco-inline-feedback__message"
     try:
-      self.__selenium_helper.get_element_by_exact_text(
-        "Please enter a valid answer",
-        ElementType.SPAN,
-        self.__easy_apply_div
-      )
-      return True
+      error_message = self.__easy_apply_div.find_element(By.CLASS_NAME, error_message_class)
+      if error_message.is_displayed():
+        return True
+      return False
     except NoSuchElementException:
       return False
 
@@ -206,34 +224,6 @@ class LinkedinApplyNowPage:
     easy_apply_scrollable_div_xpath = "/html/body/div[4]/div/div/div[2]"
     easy_apply_scrollable_div = self.__driver.find_element(By.XPATH, easy_apply_scrollable_div_xpath)
     return easy_apply_scrollable_div
-
-  def __cover_letter_is_required(self) -> bool:
-    if self.__selenium_helper.exact_text_is_present(
-      "A cover letter is required",
-      ElementType.SPAN,
-      self.__easy_apply_div
-    ):
-      print("~~~~~~~~1~~~~~~~~")
-      return True
-    try:
-      print("~~~~~~~~2~~~~~~~~")
-      cover_letter_div = self.__selenium_helper.get_element_by_exact_text(
-        "Cover letter",
-        ElementType.H3,
-        self.__easy_apply_div
-      )
-    except NoSuchElementException:
-      print("~~~~~~~~3~~~~~~~~")
-      return False
-    if self.__selenium_helper.exact_text_is_present(
-      "Please enter a valid answer",
-      ElementType.SPAN,
-      cover_letter_div
-    ):
-      print("~~~~~~~~4~~~~~~~~")
-      return True
-    print("~~~~~~~~5~~~~~~~~")
-    return False
 
   def __is_job_search_safety_reminder(self) -> bool:
     return self.__selenium_helper.exact_text_is_present(

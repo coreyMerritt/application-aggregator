@@ -1,4 +1,5 @@
 import logging
+import undetected_chromedriver as uc
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.common.keys import Keys
@@ -20,6 +21,7 @@ class LinkedinContactInfoStepper:
 
   def __init__(
     self,
+    driver: uc.Chrome,
     selenium_helper: SeleniumHelper,
     universal_config: UniversalConfig,
     linkedin_config: LinkedinConfig
@@ -28,6 +30,7 @@ class LinkedinContactInfoStepper:
     self.__linkedin_config = linkedin_config
     self.__universal_config = universal_config
     self.__resume_stepper = LinkedinResumeStepper(
+      driver,
       selenium_helper,
       universal_config,
       "./div[2]/div/div/form/div/div[2]/div/div[1]"
@@ -42,6 +45,7 @@ class LinkedinContactInfoStepper:
       ElementType.H3,
       self.__context_element
     )
+
   def resolve(self) -> None:
     logging.debug("Handling Contact Info page...")
     if self.__is_first_name_label():

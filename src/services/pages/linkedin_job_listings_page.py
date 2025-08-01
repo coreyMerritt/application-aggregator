@@ -53,6 +53,7 @@ class LinkedinJobListingsPage:
     self.__linkedin_apply_now_page = LinkedinApplyNowPage(
       driver,
       selenium_helper,
+      quick_settings,
       universal_config,
       linkedin_config
     )
@@ -84,12 +85,18 @@ class LinkedinJobListingsPage:
       if brief_job_listing.to_minimal_dict() in self.__jobs_applied_to_this_session:
         logging.info("Ignoring brief job listing because we've already applied this session. Skipping...")
         continue
-      self.__select_job(job_listing_li)
+      if self.__something_went_wrong():
+        logging.info('"Something went wrong", likely rate limited behavior. Skipping...')
+        continue
+      try:
+        self.__select_job(job_listing_li)
+      except StaleElementReferenceException:
+        job_listing_li = self.__get_job_listing_li(job_listing_li_index)
       job_listing = self.__build_new_job_listing(brief_job_listing)
       if not job_listing.passes_filter_check(self.__universal_config, self.__quick_settings):
         logging.info("Ignoring job listing because it doesn't pass the filter check. Skipping...")
         continue
-      if not self.__is_apply_button():
+      if not self.__is_apply_button() and not self.__is_easy_apply_button():
         logging.info("This job listing has no apply button. Skipping...")
         continue
       self.__apply_to_selected_job()
@@ -114,33 +121,31 @@ class LinkedinJobListingsPage:
     return (total_jobs_tried, job_listing_li_index)
 
   def __select_job(self, job_listing_li: WebElement, timeout=60) -> None:
-    full_job_details_div = self.__get_full_job_details_div()
-    assert full_job_details_div
-    previous_job_details_html = full_job_details_div.get_attribute("innerHTML")
-    assert previous_job_details_html
+    assert not self.__job_listing_li_is_active(job_listing_li)
     self.__selenium_helper.scroll_into_view(job_listing_li)
     self.__click_job_listing_li(job_listing_li)
     start_time = time.time()
     while time.time() - start_time < timeout:
-      try:
-        full_job_details_div = self.__get_full_job_details_div()
-        assert full_job_details_div
-        if full_job_details_div.get_attribute("innerHTML") != previous_job_details_html:
-          return
-        logging.debug("Waiting for full job listing to load...")
-        time.sleep(0.5)
-      except TimeoutError:
-        self.__selenium_helper.scroll_into_view(job_listing_li)
-        self.__click_job_listing_li(job_listing_li)
-      except NoSuchElementException:
-        self.__handle_potential_problems()
+      if self.__job_listing_li_is_active(job_listing_li):
+        return
+      logging.debug("Waiting for job listing li to be active to confirm job listing click...")
+      time.sleep(0.1)
     raise TimeoutError("Timed out waiting for full job listing to load.")
+
+  def __job_listing_li_is_active(self, job_listing_li: WebElement) -> bool:
+    active_class = "job-card-job-posting-card-wrapper--active"
+    try:
+      job_listing_li.find_element(By.CLASS_NAME, active_class)
+      return True
+    except NoSuchElementException:
+      return False
 
   def __click_job_listing_li(self, job_listing_li: WebElement) -> None:
     while True:
       try:
         job_listing_li.click()
-        break
+        time.sleep(0.1)
+        return
       except ElementClickInterceptedException:
         self.__handle_potential_problems()
         logging.debug("Attempting to click job listing li...")
@@ -153,6 +158,7 @@ class LinkedinJobListingsPage:
       while True:
         try:
           next_page_span.click()
+          time.sleep(3)
           return
         except ElementNotInteractableException:
           logging.debug("Failed to click next page span... Scrolling down and trying again...")
@@ -161,31 +167,19 @@ class LinkedinJobListingsPage:
 
   def __apply_to_selected_job(self) -> None:
     logging.info("Applying to job...")
-    self.__wait_for_apply_button()
-    apply_button = self.__get_apply_button()
-    apply_button_text = apply_button.text
-    assert apply_button_text
-    apply_button_text = apply_button_text.lower().strip()
-    for _ in range(30):   # TODO: Debugging
-      print(f"apply_button_text.lower(): {apply_button_text.lower()}")
-    application_is_on_linkedin = apply_button_text.lower() == "easy apply"
-    if application_is_on_linkedin:
-      self.__apply_in_new_tab()
-      return
-    elif not application_is_on_linkedin:
-      starting_tab_count = len(self.__driver.window_handles)
-      self.__click_apply_button()
-      try:
-        self.__wait_for_new_tab_to_open(starting_tab_count)
-        return
-      except TimeoutError:
-        # Weird bug where occasionally the Linkedin apply button does nothing
-        logging.warning("Apply button is dead... skipping...")
+    self.__wait_for_any_apply_button()
+    if self.__is_easy_apply_button():
+      self.__apply_on_linkedin()
+    elif self.__is_apply_button():
+      self.__apply_on_company_site()
+    else:
+      raise RuntimeError("An apply button is found, but doesn't meet criteria of either apply button.")
 
   def __wait_for_new_tab_to_open(self, starting_tab_count: int, timeout=10) -> None:
     start_time = time.time()
     while time.time() - start_time < timeout:
       if len(self.__driver.window_handles) > starting_tab_count:
+        time.sleep(0.1)   # This little bit of buffer time seems to help with some issues
         return
       self.__handle_potential_problems()
       logging.debug("Waiting for new tab to open...")
@@ -195,38 +189,31 @@ class LinkedinJobListingsPage:
   def __click_apply_button(self) -> None:
     self.__wait_for_apply_button()
     apply_button = self.__get_apply_button()
-    apply_button.click()
+    apply_span = apply_button.find_element(By.XPATH, "./span")
+    apply_span.click()
 
-  def __get_all_content_div_xpath(self) -> str:
-    for i in range(5, 7):
-      potential_all_content_div = f"/html/body/div[{i}]"
-      potential_header_button_xpath = f"{potential_all_content_div}/header/div/nav"
-      try:
-        timeout = 1
-        start_time = time.time()
-        while time.time() - start_time < timeout:
-          try:
-            some_validation_button = self.__driver.find_element(By.XPATH, potential_header_button_xpath)
-            break
-          except NoSuchElementException:
-            logging.debug("Waiting for some validation button to load...")
-            time.sleep(0.1)
-        try:
-          if some_validation_button:
-            return potential_all_content_div
-        except UnboundLocalError:
-          pass
-      except NoSuchElementException:
-        pass
-    raise RuntimeError("Failed to determine the all content div.")
+  def __click_easy_apply_button(self) -> None:
+    self.__wait_for_easy_apply_button()
+    easy_apply_button = self.__get_easy_apply_button()
+    easy_apply_span = easy_apply_button.find_element(By.XPATH, "./span")
+    easy_apply_span.click()
 
-  def __apply_in_new_tab(self) -> None:
+  def __apply_on_linkedin(self) -> None:
     logging.debug("Applying in new tab...")
     url = self.__driver.current_url
     self.__selenium_helper.open_new_tab()
     self.__driver.get(url)
-    self.__click_apply_button()
+    self.__click_easy_apply_button()
     self.__linkedin_apply_now_page.apply()
+
+  def __apply_on_company_site(self) -> None:
+    starting_tab_count = len(self.__driver.window_handles)
+    self.__click_apply_button()
+    try:
+      self.__wait_for_new_tab_to_open(starting_tab_count)
+    except TimeoutError:
+      # Weird bug where occasionally the Linkedin apply button does nothing
+      logging.warning("Apply button is dead... skipping...")
 
   def __build_new_brief_job_listing(self, job_listing_li: WebElement) -> LinkedinBriefJobListing:
     self.__selenium_helper.scroll_into_view(job_listing_li)
@@ -263,6 +250,10 @@ class LinkedinJobListingsPage:
         self.__handle_potential_problems()
         logging.debug("Waiting for full job details div to load...")
         time.sleep(0.1)
+      except StaleElementReferenceException:
+        main_content_div = self.__get_main_content_div()
+        if main_content_div is None:
+          return None
     return full_job_details_div
 
   def __get_job_listing_li(self, index: int) -> WebElement | None:
@@ -276,37 +267,29 @@ class LinkedinJobListingsPage:
       return None
     return job_listing_li
 
-  def __get_job_listings_ul(self) -> WebElement | None:
+  def __get_job_listings_ul(self, timeout=10) -> WebElement | None:
     logging.debug("Getting job listings ul...")
-    relative_job_listings_ul_xpath = "./div[3]/div[3]/div/div[2]/main/div/div[2]/div[1]/ul"
-    main_content_div = self.__get_main_content_div()
-    if main_content_div is None:
-      return None
-    while True:
-      try:
-        job_listings_ul = main_content_div.find_element(By.XPATH, relative_job_listings_ul_xpath)
-        break
-      except NoSuchElementException:
-        self.__handle_potential_problems()
-        logging.debug("Waiting for job listing ul to load...")
-        time.sleep(0.1)
-    return job_listings_ul
-
-  def __get_main_content_div(self, timeout=10) -> WebElement | None:
     start_time = time.time()
     while time.time() - start_time < timeout:
-      for i in range(5, 7):
-        potential_main_div_xpath = f"/html/body/div[{i}]"
-        potential_job_listings_ul_xpath = f"{potential_main_div_xpath}/div[3]/div[3]/div/div[2]/main/div/div[2]/div[1]/ul"   # pylint: disable=line-too-long
-        try:
-          self.__driver.find_element(By.XPATH, potential_job_listings_ul_xpath)
-          main_content_div = self.__driver.find_element(By.XPATH, potential_main_div_xpath)
-          if main_content_div:
-            return main_content_div
-        except NoSuchElementException:
-          self.__handle_potential_problems()
-          logging.debug("Waiting for main content div...")
-          time.sleep(0.1)
+      try:
+        linkedin_footer = self.__selenium_helper.get_element_by_aria_label(
+          "LinkedIn Footer Content",
+          ElementType.FOOTER,
+          self.__get_main_content_div()
+        )
+        job_listings_ul = linkedin_footer.find_element(By.XPATH, "..")
+        return job_listings_ul
+      except NoSuchElementException:
+        logging.debug("Waiting for job listings ul...")
+        time.sleep(0.1)
+      except StaleElementReferenceException:
+        logging.debug("Waiting for job listings ul...")
+        time.sleep(0.1)
+    raise NoSuchElementException("Failed to find job listings ul.")
+
+  def __get_main_content_div(self) -> WebElement | None:
+    main_content_div_id = "main"
+    return self.__driver.find_element(By.ID, main_content_div_id)
 
   def __get_next_page_span(self) -> WebElement:
     logging.debug("Getting next page button...")
@@ -317,39 +300,72 @@ class LinkedinJobListingsPage:
       base_element=main_content_div
     )
 
+  def __wait_for_any_apply_button(self) -> None:
+    while True:
+      if self.__is_apply_button():
+        return
+      elif self.__is_easy_apply_button():
+        return
+      logging.debug("Waiting for any apply button...")
+      time.sleep(0.1)
+
   def __wait_for_apply_button(self) -> None:
     while not self.__is_apply_button():
       self.__handle_potential_problems()
       logging.debug("Waiting for apply button...")
       time.sleep(0.1)
 
+  def __wait_for_easy_apply_button(self) -> None:
+    while not self.__is_easy_apply_button():
+      self.__handle_potential_problems()
+      logging.debug("Waiting for Easy Apply button...")
+      time.sleep(0.1)
+
   def __is_apply_button(self) -> bool:
-    all_content_div_xpath = self.__get_all_content_div_xpath()
-    potential_apply_button_xpaths = [
-      f"{all_content_div_xpath}/div[3]/div[3]/div/div[2]/main/div/div[2]/div[2]/div/div[3]/div[1]/div/div[1]/div/div[1]/div/div[6]/div/div/button/span",   # pylint: disable=line-too-long
-      f"{all_content_div_xpath}/div[3]/div[3]/div/div[2]/main/div/div[2]/div[2]/div/div[3]/div[1]/div/div[1]/div/div[1]/div/div[6]/div/div/div/button/span"   # pylint: disable=line-too-long
-    ]
-    for xpath in potential_apply_button_xpaths:
-      try:
-        self.__driver.find_element(By.XPATH, xpath)
+    apply_button_id = "jobs-apply-button-id"
+    try:
+      full_job_details_div = self.__get_full_job_details_div()
+      if full_job_details_div is None:
+        return False
+      apply_button = full_job_details_div.find_element(By.ID, apply_button_id)
+      apply_span = apply_button.find_element(By.XPATH, "./span")
+      if apply_span.text.lower().strip() == "apply":
         return True
-      except NoSuchElementException:
-        pass
-    return False
+      return False
+    except NoSuchElementException:
+      return False
+
+  def __is_easy_apply_button(self) -> bool:
+    easy_apply_button_id = "jobs-apply-button-id"
+    try:
+      full_job_details_div = self.__get_full_job_details_div()
+      if full_job_details_div is None:
+        return False
+      easy_apply_button = full_job_details_div.find_element(By.ID, easy_apply_button_id)
+      easy_apply_span = easy_apply_button.find_element(By.XPATH, "./span")
+      if easy_apply_span.text.lower().strip() == "easy apply":
+        return True
+      return False
+    except NoSuchElementException:
+      return False
 
   def __get_apply_button(self) -> WebElement:
-    all_content_div_xpath = self.__get_all_content_div_xpath()
-    potential_apply_button_xpaths = [
-      f"{all_content_div_xpath}/div[3]/div[3]/div/div[2]/main/div/div[2]/div[2]/div/div[3]/div[1]/div/div[1]/div/div[1]/div/div[6]/div/div/button/span",   # pylint: disable=line-too-long
-      f"{all_content_div_xpath}/div[3]/div[3]/div/div[2]/main/div/div[2]/div[2]/div/div[3]/div[1]/div/div[1]/div/div[1]/div/div[6]/div/div/div/button/span"   # pylint: disable=line-too-long
-    ]
-    for xpath in potential_apply_button_xpaths:
-      try:
-        apply_button = self.__driver.find_element(By.XPATH, xpath)
-        return apply_button
-      except NoSuchElementException:
-        pass
-    raise NoSuchElementException("Failed to find apply button.")
+    apply_span = self.__selenium_helper.get_element_by_exact_text(
+      "Apply",
+      ElementType.SPAN,
+      self.__get_full_job_details_div()
+    )
+    apply_button = apply_span.find_element(By.XPATH, "..")
+    return apply_button
+
+  def __get_easy_apply_button(self) -> WebElement:
+    easy_apply_span = self.__selenium_helper.get_element_by_exact_text(
+      "Easy Apply",
+      ElementType.SPAN,
+      self.__get_full_job_details_div()
+    )
+    easy_apply_button = easy_apply_span.find_element(By.XPATH, "..")
+    return easy_apply_button
 
   def __is_no_matching_jobs_page(self) -> bool:
     return self.__selenium_helper.exact_text_is_present(
@@ -362,6 +378,7 @@ class LinkedinJobListingsPage:
       self.__remove_job_search_safety_reminder_popup()
     elif self.__something_went_wrong():
       self.__driver.refresh()
+      time.sleep(5)   # It seems that if you don't wait here, the issue will arise again -- likely rate limiting
     elif self.__is_rate_limited_page():
       self.__handle_rate_limited_page()
 

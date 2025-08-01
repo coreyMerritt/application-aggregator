@@ -41,7 +41,7 @@ class IndeedJobListingsPage:
     self.__universal_config = universal_config
     self.__quick_settings = quick_settings
     self.__indeed_config = indeed_config
-    self.__apply_now_page = IndeedApplyNowPage(driver, selenium_helper, universal_config)
+    self.__apply_now_page = IndeedApplyNowPage(driver, selenium_helper, universal_config, quick_settings)
     self.__jobs_applied_to_this_session = []
     self.__current_page_number = 1
 

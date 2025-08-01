@@ -1,9 +1,7 @@
 import logging
 import time
 import undetected_chromedriver as uc
-from selenium.webdriver.common.by import By
-from selenium.common.exceptions import NoSuchElementException
-from models.enums.element_type import ElementType
+from models.configs.quick_settings import QuickSettings
 from models.configs.universal_config import UniversalConfig
 from services.misc.selenium_helper import SeleniumHelper
 from services.pages.indeed_apply_now_page.steppers.indeed_commute_check_stepper import IndeedCommuteCheckStepper
@@ -18,6 +16,7 @@ from services.pages.indeed_apply_now_page.steppers.indeed_resume_stepper import 
 class IndeedApplyNowPage:
   __driver: uc.Chrome
   __selenium_helper: SeleniumHelper
+  __quick_settings: QuickSettings
   __relevant_experience_stepper: IndeedRelevantExperienceStepper
   __resume_stepper: IndeedResumeStepper
   __location_stepper: IndeedLocationStepper
@@ -28,10 +27,12 @@ class IndeedApplyNowPage:
     self,
     driver: uc.Chrome,
     selenium_helper: SeleniumHelper,
-    universal_config: UniversalConfig
+    universal_config: UniversalConfig,
+    quick_settings: QuickSettings
   ):
     self.__driver = driver
     self.__selenium_helper = selenium_helper
+    self.__quick_settings = quick_settings
     self.__relevant_experience_stepper = IndeedRelevantExperienceStepper(
       driver,
       selenium_helper,
@@ -93,6 +94,9 @@ class IndeedApplyNowPage:
         self.__driver.switch_to.window(self.__driver.window_handles[0])
         return
       else:
+        # TODO: This is almost certaining going to cause a timing bug. Double check sometime
+        if self.__quick_settings.bot_behavior.pause_on_unknown_stepper:
+          input("Unknown stepper found. Press enter to continue...")
         logging.warning("Might have found an unhandled page. Trying again...")
         time.sleep(0.5)
 

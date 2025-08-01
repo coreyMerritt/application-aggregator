@@ -1,5 +1,6 @@
 
 from datetime import datetime, timedelta, timezone
+import logging
 from urllib.parse import quote_plus
 from sqlalchemy import create_engine, desc
 from sqlalchemy.engine import Engine
@@ -66,6 +67,7 @@ class DatabaseManager:
       session.commit()
 
   def log_rate_limit_block(self, ip_address: str, platform: Platform) -> None:
+    logging.warning("Rate limited by %s on address: %s", platform.value, ip_address)
     rate_limit = RateLimitORM(
       ip_address=ip_address,
       platform=platform.value

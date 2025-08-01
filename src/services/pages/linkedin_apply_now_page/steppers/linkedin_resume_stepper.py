@@ -1,3 +1,4 @@
+import undetected_chromedriver as uc
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support.select import Select
@@ -8,6 +9,7 @@ from services.misc.selenium_helper import SeleniumHelper
 
 
 class LinkedinResumeStepper:
+  __driver: uc.Chrome
   __selenium_helper: SeleniumHelper
   __universal_config: UniversalConfig
   __context_element: WebElement
@@ -15,6 +17,7 @@ class LinkedinResumeStepper:
 
   def __init__(
     self,
+    driver: uc.Chrome,
     selenium_helper: SeleniumHelper,
     universal_config: UniversalConfig,
     # This is the default to be used when on the genuine resume stepper
@@ -22,6 +25,7 @@ class LinkedinResumeStepper:
     # occassionally also handles resume selection... Heckin' Linkedin...
     relative_resume_list_div_xpath: str = "./div[2]/div/div[2]/form/div/div/div/div[1]"
   ):
+    self.__driver = driver
     self.__selenium_helper = selenium_helper
     self.__universal_config = universal_config
     self.__relative_resume_list_div_xpath = relative_resume_list_div_xpath
@@ -56,6 +60,8 @@ class LinkedinResumeStepper:
     if self.__is_vague_education_completed_question():
       self.__handle_vague_education_completed_question()
     self.__handle_resume()
+    if self.__cover_letter_is_required():
+      self.__handle_cover_letter()
 
   def __handle_resume(self) -> None:
     expected_resume_name = self.__build_expected_resume_name()
@@ -284,6 +290,39 @@ class LinkedinResumeStepper:
     )
     education_completed_input = education_completed_label.find_element(By.XPATH, "../input")
     self.__selenium_helper.write_to_input(degrees[0].degree_type, education_completed_input)
+
+  def __cover_letter_is_required(self) -> bool:
+    try:
+      label = self.__selenium_helper.get_element_by_exact_text(
+        "Cover letter",
+        ElementType.LABEL,
+        self.__context_element
+      )
+    except NoSuchElementException:
+      try:
+        label = self.__selenium_helper.get_element_by_exact_text(
+          "Be sure to include an updated cover letter",
+          ElementType.SPAN,
+          self.__context_element
+        )
+      except NoSuchElementException:
+        return False
+    after_content = self.__driver.execute_script("""
+      const el = arguments[0];
+      const style = window.getComputedStyle(el, '::after');
+      return style.getPropertyValue('content');
+    """, label)
+    if after_content:
+      input("DEBUG: Cover letter is required.")
+      return True
+    return False
+
+  def __handle_cover_letter(self) -> None:
+    if self.__universal_config.bot_behavior.ignore_jobs_that_demand_cover_letters:
+      self.__driver.close()
+      self.__driver.switch_to.window(self.__driver.window_handles[0])
+    else:
+      self.__driver.switch_to.window(self.__driver.window_handles[0])
 
   def __get_input_from_label(self, label: WebElement) -> WebElement:
     input_id = label.get_attribute("for")

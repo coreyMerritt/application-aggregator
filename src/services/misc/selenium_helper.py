@@ -201,5 +201,6 @@ class SeleniumHelper:
   def __handle_proxy_configuration(self, options: uc.ChromeOptions) -> uc.ChromeOptions:
     proxy_config = self.__proxy_manager.get_best_proxy()
     if proxy_config:
+      logging.info("Using proxy: %s", proxy_config.host)
       options.add_argument(f"--proxy-server=socks5://{proxy_config.host}:{proxy_config.port}")
     return options

@@ -12,6 +12,7 @@ from models.configs.linkedin_config import LinkedinConfig
 from models.configs.system_config import SystemConfig
 from models.configs.quick_settings import QuickSettings
 from models.configs.universal_config import UniversalConfig
+from models.enums.platform import Platform
 from services.misc.database_manager import DatabaseManager
 from services.misc.proxy_manager import ProxyManager
 from services.misc.selenium_helper import SeleniumHelper
@@ -73,12 +74,13 @@ class Start:
 
   def execute(self):
     try:
-      for platform in self.__quick_settings.bot_behavior.platform_order:
-        if platform == "linkedin":
+      for some_platform in self.__quick_settings.bot_behavior.platform_order:
+        platform = str(some_platform).lower()
+        if platform == Platform.LINKEDIN.value.lower():
           self.__apply_on_linkedin()
-        elif platform == "glassdoor":
+        elif platform == Platform.GLASSDOOR.value.lower():
           self.__apply_on_glassdoor()
-        elif platform == "indeed":
+        elif platform == Platform.INDEED.value.lower():
           self.__apply_on_indeed()
 
       input("\n\tPress enter to exit...")

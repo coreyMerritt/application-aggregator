@@ -48,7 +48,7 @@ class DatabaseManager:
       location=brief_job_listing.get_location(),
       min_pay=brief_job_listing.get_min_pay(),
       max_pay=brief_job_listing.get_max_pay(),
-      platform=platform,
+      platform=platform.value,
       url=url
     )
     session = self.get_session()
@@ -68,7 +68,7 @@ class DatabaseManager:
   def log_rate_limit_block(self, ip_address: str, platform: Platform) -> None:
     rate_limit = RateLimitORM(
       ip_address=ip_address,
-      platform=platform
+      platform=platform.value
     )
     session = self.get_session()
     session.add(rate_limit)
@@ -80,7 +80,7 @@ class DatabaseManager:
       last_rate_limit_from_host = (
         session.query(RateLimitORM)
           .filter(RateLimitORM.ip_address == ip_address)
-          .filter(RateLimitORM.platform == platform)
+          .filter(RateLimitORM.platform == platform.value)
           .order_by(desc(RateLimitORM.timestamp))
           .first()
       )

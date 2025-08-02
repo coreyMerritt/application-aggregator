@@ -21,11 +21,12 @@ Support for additional platforms may have been added at the time of reading.
 
 ## ⚙️ Features
 
-- 📝 **Application Pre-Fill**: Auto-fills “Easy Apply”–style job forms with saved applicant data. For external company websites, it opens the page and continues on.
-- 📥 **Listing Aggregation**: Collects job listings from supported platforms and stores them in a database.
 - 🎯 **Advanced Filtering**: Apply highly granular filters to focus on jobs that match your specific criteria.
+- 📥 **Listing Aggregation**: Collects job listings from supported platforms and stores them in a database.
+- 📝 **Application Pre-Fill**: Auto-fills “Easy Apply”–style job forms with saved applicant data. (For external company websites, you'll still enjoy the primary feature of this software which is the highly-customizable filtering, however filling the forms will be a user action.)
 - 🧭 **Selenium-Powered Navigation**: Leverages browser automation to interact with pages as a user would.
 - 🧪 **Human-in-the-Loop UX**: You can interact directly with the browser session to complete any dynamic fields or final submissions.
+- **SOCKS5 Proxy Support**: Avoid rate limiting limitations if you have any SOCKS5 proxies available to you.
 
 ## 🛠️ Setup
 
@@ -47,10 +48,10 @@ docker-compose up -d	(If you don't have a database ready)
 
 ### Configuration
 
-All major options—platform selection, filters, credentials, etc.—are managed through:
+All major options (platform selection, filters, credentials, etc.) are managed through:
 
-- `config.yml`: Your main settings file  
-- `config_model.yml`: Schema to guide valid configuration
+- `config.yml`: Your main settings file
+- `config_model.yml`: Schema to guide valid configuration (This will be copied to "config.yml" when running ./install.sh)
 
 Make sure to read and customize these files before running.
 

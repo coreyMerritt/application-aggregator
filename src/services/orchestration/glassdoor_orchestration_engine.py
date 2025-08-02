@@ -42,7 +42,7 @@ class GlassdoorOrchestrationEngine:
     )
 
   def apply(self):
-    logging.debug("Applying on Glassdoor...")
+    logging.info("Applying on Glassdoor...")
     self.__wait_for_human_verification_page()
     self.__glassdoor_login_page.login()
     search_terms = self.__universal_config.search.terms.match
@@ -61,7 +61,7 @@ class GlassdoorOrchestrationEngine:
       time.sleep(0.5)
 
   def __go_to_query_url(self, url: str) -> None:
-    logging.debug("Going to query url: %s...", url)
+    logging.info("Going to query url: %s...", url)
     try:
       self.__driver.get(url)
     except TimeoutException:

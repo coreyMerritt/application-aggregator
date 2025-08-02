@@ -75,6 +75,5 @@ The system will:
 ## 📜 License
 
 [GPLv3](LICENSE.md)
+
 © 2025 Corey Merritt
-
-

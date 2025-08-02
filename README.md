@@ -5,7 +5,6 @@ Application Aggregator is a Selenium-based system designed to automate and strea
 
 ## 🧠 Key Concept
 
-0. Install/Deploy
 1. Configure your preferences and filters using `config.yml`.
 2. Start the system and handle some foundation where needed (captchas, one-time codes).
 3. Go get a coffee ☕—when you return, you’ll have dozens to hundreds of high-quality, curated job listings, some even pre-filled and ready to submit.

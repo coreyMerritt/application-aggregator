@@ -1,7 +1,7 @@
 
 # Application Aggregator
 
-The Application Aggregator is a Selenium-based system designed to automate and streamline the job application discovery process across multiple job platforms. It locates and evaluates job listings using highly customizable filters, presenting users with only the most relevant and actionable opportunities.
+Application Aggregator is a Selenium-based system designed to automate and streamline the job application discovery process across multiple job platforms. It locates and evaluates job listings using highly customizable filters, presenting users with only the most relevant and actionable opportunities.
 
 ## 🧠 Key Concept
 

@@ -25,12 +25,6 @@ class GlassdoorLoginPage:
 
   def login(self) -> None:
     logging.debug("Logging in...")
-    base_url = "https://www.glassdoor.com"
-    try:
-      self.__driver.get(base_url)
-    except TimeoutException:
-      logging.debug("GET timed out. Refreshing...")
-      self.__driver.refresh()
     self.__wait_for_email_form()
     email_form_name = "emailForm"
     email_form = self.__driver.find_element(By.NAME, email_form_name)
@@ -45,6 +39,7 @@ class GlassdoorLoginPage:
     )
     continue_with_email_button = continue_with_email_span.find_element(By.XPATH, "..")
     continue_with_email_button.click()
+    time.sleep(0.2)
     auth_email_form_name = "authEmailForm"
     while True:
       try:
@@ -57,6 +52,7 @@ class GlassdoorLoginPage:
     password = self.__glassdoor_config.password
     password_input = auth_email_form.find_element(By.ID, password_input_id)
     self.__selenium_helper.write_to_input(password, password_input, True)
+    time.sleep(0.2)
     sign_in_span_text = "Sign in"
     sign_in_span = self.__selenium_helper.get_element_by_exact_text(
       some_text=sign_in_span_text,

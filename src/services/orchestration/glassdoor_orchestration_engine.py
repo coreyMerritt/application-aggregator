@@ -43,7 +43,15 @@ class GlassdoorOrchestrationEngine:
 
   def apply(self):
     logging.info("Applying on Glassdoor...")
-    self.__wait_for_human_verification_page()
+    base_url = "https://www.glassdoor.com"
+    while True:
+      try:
+        self.__driver.get(base_url)
+        self.__wait_for_human_verification_page()
+        break
+      except TimeoutException:
+        logging.warning("Timed out. Trying again...")
+        time.sleep(0.5)
     self.__glassdoor_login_page.login()
     search_terms = self.__universal_config.search.terms.match
     for search_term in search_terms:
@@ -53,11 +61,20 @@ class GlassdoorOrchestrationEngine:
       self.__glassdoor_job_listings_page.apply_to_all_matching_jobs()
 
   def __wait_for_human_verification_page(self) -> None:
-    while self.__selenium_helper.exact_text_is_present(
-      "Help Us Protect Glassdoor",
-      ElementType.H1
-    ):
-      logging.info("Waiting for user to solve human verification page...")
+    while True:
+      if self.__selenium_helper.exact_text_is_present(
+        "Help Us Protect Glassdoor",
+        ElementType.H1
+      ):
+        logging.info("Waiting for user to solve human verification page...")
+        time.sleep(0.5)
+        continue
+      elif self.__selenium_helper.exact_text_is_present(
+        "Enter email",
+        ElementType.LABEL
+      ):
+        break
+      logging.info("Waiting for login page to appear...")
       time.sleep(0.5)
 
   def __go_to_query_url(self, url: str) -> None:

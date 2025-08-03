@@ -1,12 +1,13 @@
 
 # Application Aggregator
 
-Application Aggregator is a Selenium-based system designed to automate and streamline the job application discovery process across multiple job platforms. It locates and evaluates job listings using highly customizable filters, presenting users with only the most relevant and actionable opportunities.
+The Application Aggregator is a Selenium-based system designed to automate and streamline the job application discovery process across multiple job platforms. It locates and evaluates job listings using highly customizable filters, presenting users with only the most relevant and actionable opportunities.
 
 ## 🧠 Key Concept
 
+0. Install/Deploy
 1. Configure your preferences and filters using `config.yml`.
-2. Start the system and handle some security checks where needed (captchas, one-time codes).
+2. Start the system and handle some foundation where needed (captchas, one-time codes).
 3. Go get a coffee ☕—when you return, you’ll have dozens to hundreds of high-quality, curated job listings, some even pre-filled and ready to submit.
 
 ## 🔍 Supported Platforms
@@ -21,12 +22,11 @@ Support for additional platforms may have been added at the time of reading.
 
 ## ⚙️ Features
 
-- 🎯 **Advanced Filtering**: Apply highly granular filters to focus on jobs that match your specific criteria.
+- 📝 **Application Pre-Fill**: Auto-fills “Easy Apply”–style job forms with saved applicant data. For external company websites, it opens the page and continues on.
 - 📥 **Listing Aggregation**: Collects job listings from supported platforms and stores them in a database.
-- 📝 **Application Pre-Fill**: Auto-fills “Easy Apply”–style job forms with saved applicant data. (For external company websites, you'll still enjoy the primary feature of this software which is the highly-customizable filtering, however filling the forms will be a user action.)
+- 🎯 **Advanced Filtering**: Apply highly granular filters to focus on jobs that match your specific criteria.
 - 🧭 **Selenium-Powered Navigation**: Leverages browser automation to interact with pages as a user would.
 - 🧪 **Human-in-the-Loop UX**: You can interact directly with the browser session to complete any dynamic fields or final submissions.
-- **SOCKS5 Proxy Support**: Avoid rate limiting limitations if you have any SOCKS5 proxies available to you.
 
 ## 🛠️ Setup
 
@@ -48,10 +48,10 @@ docker-compose up -d	(If you don't have a database ready)
 
 ### Configuration
 
-All major options (platform selection, filters, credentials, etc.) are managed through:
+All major options—platform selection, filters, credentials, etc.—are managed through:
 
-- `config.yml`: Your main settings file
-- `config_model.yml`: Schema to guide valid configuration (This will be copied to "config.yml" when running ./install.sh)
+- `config.yml`: Your main settings file  
+- `config_model.yml`: Schema to guide valid configuration
 
 Make sure to read and customize these files before running.
 
@@ -74,6 +74,6 @@ The system will:
 
 ## 📜 License
 
-[GPLv3](LICENSE.md)
-
+[GPLv3](LICENSE)  
 © 2025 Corey Merritt
+

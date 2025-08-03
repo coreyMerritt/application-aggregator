@@ -1,4 +1,8 @@
 #!/usr/bin/env bash
 
-python3 ./src/main.py
+if [[ -f .venv/bin/activate ]]; then
+  source .venv/bin/activate
+fi
+
+exec python ./src/main.py
 

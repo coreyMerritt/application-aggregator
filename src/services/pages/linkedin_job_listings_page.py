@@ -10,7 +10,8 @@ from selenium.common.exceptions import (
   ElementClickInterceptedException,
   ElementNotInteractableException,
   NoSuchElementException,
-  StaleElementReferenceException
+  StaleElementReferenceException,
+  TimeoutException
 )
 from entities.linkedin_brief_job_listing import LinkedinBriefJobListing
 from entities.linkedin_job_listing import LinkedinJobListing
@@ -229,13 +230,24 @@ class LinkedinJobListingsPage:
     start_time = time.time()
     while time.time() - start_time < timeout:
       try:
-        full_job_details_div = self.__get_full_job_details_div()
-        assert full_job_details_div
-        job_listing = LinkedinJobListing(brief_job_listing, full_job_details_div)
+        job_description_content_div = self.__get_job_description_content_div()
+        job_listing = LinkedinJobListing(brief_job_listing, job_description_content_div)
         return job_listing
       except StaleElementReferenceException:
         pass
     raise NoSuchElementException("Failed to find full job details div.")
+
+  def __get_job_description_content_div(self, timeout=5.0) -> WebElement:
+    job_description_content_div_selector = "div.jobs-description-content__text--stretch"
+    start_time = time.time()
+    while time.time() - start_time < timeout:
+      try:
+        job_description_content_div = self.__driver.find_element(By.CSS_SELECTOR, job_description_content_div_selector)
+        return job_description_content_div
+      except NoSuchElementException:
+        logging.info("Waiting for job description content div...")
+        time.sleep(0.1)
+    raise TimeoutException("Timed out waiting for job description content div.")
 
   def __get_full_job_details_div(self) -> WebElement | None:
     full_job_details_div_selector = ".jobs-details__main-content.jobs-details__main-content--single-pane.full-width"

@@ -69,10 +69,10 @@ class AboutMe:
 
 @dataclass
 class JobMatchingList:
-  titles: List[str] = field(default_factory=list)
-  companies: List[str] = field(default_factory=list)
-  locations: List[str] = field(default_factory=list)
-  descriptions: List[str] = field(default_factory=list)
+  titles: List[str | list] = field(default_factory=list)
+  companies: List[str | list] = field(default_factory=list)
+  locations: List[str | list] = field(default_factory=list)
+  descriptions: List[str | list] = field(default_factory=list)
 
 @dataclass
 class BotBehavior:
@@ -119,6 +119,6 @@ class Search:
 
 @dataclass
 class UniversalConfig:
-  about_me: AboutMe
+  about_me: AboutMe = field(default_factory=AboutMe)
   bot_behavior: BotBehavior = field(default_factory=BotBehavior)
   search: Search = field(default_factory=Search)

@@ -4,14 +4,9 @@ import logging
 import time
 import traceback
 import yaml
-from box import Box
 import undetected_chromedriver as uc
-from models.configs.glassdoor_config import GlassdoorConfig
-from models.configs.indeed_config import IndeedConfig
-from models.configs.linkedin_config import LinkedinConfig
-from models.configs.system_config import SystemConfig
-from models.configs.quick_settings import QuickSettings
-from models.configs.universal_config import UniversalConfig
+from dacite import from_dict
+from models.configs.full_config import FullConfig
 from models.enums.platform import Platform
 from services.misc.database_manager import DatabaseManager
 from services.misc.proxy_manager import ProxyManager
@@ -21,13 +16,9 @@ from services.orchestration.indeed_orchestration_engine import IndeedOrchestrati
 from services.orchestration.linkedin_orchestration_engine import LinkedinOrchestrationEngine
 from services.pages.indeed_apply_now_page.indeed_apply_now_page import IndeedApplyNowPage
 
+
 class Start:
-  __quick_settings: QuickSettings
-  __system_config: SystemConfig
-  __universal_config: UniversalConfig
-  __linkedin_config: LinkedinConfig
-  __glassdoor_config: GlassdoorConfig
-  __indeed_config: IndeedConfig
+  __config: FullConfig
   __driver: uc.Chrome
   __proxy_manager: ProxyManager
   __selenium_helper: SeleniumHelper
@@ -36,45 +27,20 @@ class Start:
   def __init__(self):
     self.__configure_logger()
     with open("config.yml", "r", encoding='utf-8') as config_file:
-      config = Box(yaml.safe_load(config_file))
-    self.__quick_settings = QuickSettings(
-      bot_behavior=config.quick_settings.bot_behavior
-    )
-    self.__system_config = SystemConfig(
-      browser=config.system.browser,
-      database=config.system.database,
-      proxies=config.system.proxies
-    )
-    self.__universal_config = UniversalConfig(
-      about_me=config.universal.about_me,
-      bot_behavior=config.universal.bot_behavior,
-      search=config.universal.search
-    )
-    self.__linkedin_config = LinkedinConfig(
-      easy_apply_only=config.linkedin.easy_apply_only,
-      email=config.linkedin.email,
-      password=config.linkedin.password
-    )
-    self.__glassdoor_config = GlassdoorConfig(
-      email=config.glassdoor.email,
-      password=config.glassdoor.password
-    )
-    self.__indeed_config = IndeedConfig(
-      apply_now_only=config.indeed.apply_now_only,
-      email=config.indeed.email
-    )
-    self.__database_manager = DatabaseManager(self.__system_config.database)
-    self.__proxy_manager = ProxyManager(self.__system_config.proxies, self.__database_manager)
+      raw_config = yaml.safe_load(config_file)
+    self.__config = from_dict(data_class=FullConfig, data=raw_config)
+    self.__database_manager = DatabaseManager(self.__config.system.database)
+    self.__proxy_manager = ProxyManager(self.__config.system.proxies, self.__database_manager)
     self.__selenium_helper = SeleniumHelper(
-      self.__system_config,
-      self.__quick_settings.bot_behavior.default_page_load_timeout,
+      self.__config.system,
+      self.__config.quick_settings.bot_behavior.default_page_load_timeout,
       self.__proxy_manager
     )
     self.__driver = self.__selenium_helper.get_driver()
 
   def execute(self):
     try:
-      for some_platform in self.__quick_settings.bot_behavior.platform_order:
+      for some_platform in self.__config.quick_settings.bot_behavior.platform_order:
         platform = str(some_platform).lower()
         if platform == Platform.LINKEDIN.value.lower():
           self.__apply_on_linkedin()
@@ -114,34 +80,34 @@ class Start:
     indeed_orchestration_engine = IndeedOrchestrationEngine(
       self.__driver,
       self.__selenium_helper,
-      self.__universal_config,
-      self.__quick_settings,
-      self.__indeed_config
+      self.__config.universal,
+      self.__config.quick_settings,
+      self.__config.indeed
     )
     indeed_orchestration_engine.apply()
-    if self.__quick_settings.bot_behavior.pause_after_each_platform:
+    if self.__config.quick_settings.bot_behavior.pause_after_each_platform:
       input("\nFinished with Indeed. Press enter to proceed...")
-    if self.__quick_settings.bot_behavior.remove_tabs_after_each_platform:
+    if self.__config.quick_settings.bot_behavior.remove_tabs_after_each_platform:
       self.__remove_all_tabs_except_first()
 
   def __apply_on_glassdoor(self) -> None:
     glassdoor_orchestration_engine = GlassdoorOrchestrationEngine(
       self.__driver,
       self.__selenium_helper,
-      self.__universal_config,
-      self.__quick_settings,
-      self.__glassdoor_config,
+      self.__config.universal,
+      self.__config.quick_settings,
+      self.__config.glassdoor,
       IndeedApplyNowPage(
         self.__driver,
         self.__selenium_helper,
-        self.__universal_config,
-        self.__quick_settings
+        self.__config.universal,
+        self.__config.quick_settings
       )
     )
     glassdoor_orchestration_engine.apply()
-    if self.__quick_settings.bot_behavior.pause_after_each_platform:
+    if self.__config.quick_settings.bot_behavior.pause_after_each_platform:
       input("\nFinished with Glassdoor. Press enter to proceed...")
-    if self.__quick_settings.bot_behavior.remove_tabs_after_each_platform:
+    if self.__config.quick_settings.bot_behavior.remove_tabs_after_each_platform:
       self.__remove_all_tabs_except_first()
 
   def __apply_on_linkedin(self) -> None:
@@ -149,15 +115,15 @@ class Start:
       self.__driver,
       self.__selenium_helper,
       self.__database_manager,
-      self.__universal_config,
-      self.__quick_settings,
-      self.__linkedin_config,
+      self.__config.universal,
+      self.__config.quick_settings,
+      self.__config.linkedin,
       self.__proxy_manager
     )
     linkedin_orchestration_engine.apply()
-    if self.__quick_settings.bot_behavior.pause_after_each_platform:
+    if self.__config.quick_settings.bot_behavior.pause_after_each_platform:
       input("\nFinished with Linkedin. Press enter to proceed...")
-    if self.__quick_settings.bot_behavior.remove_tabs_after_each_platform:
+    if self.__config.quick_settings.bot_behavior.remove_tabs_after_each_platform:
       self.__remove_all_tabs_except_first()
 
   def __remove_all_tabs_except_first(self):

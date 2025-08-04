@@ -15,6 +15,7 @@ from selenium.common.exceptions import (
 )
 from entities.linkedin_brief_job_listing import LinkedinBriefJobListing
 from entities.linkedin_job_listing import LinkedinJobListing
+from exceptions.no_matching_jobs_page_exception import NoMatchingJobsPageException
 from models.configs.quick_settings import QuickSettings
 from models.enums.element_type import ElementType
 from models.configs.linkedin_config import LinkedinConfig
@@ -66,17 +67,20 @@ class LinkedinJobListingsPage:
     job_listing_li_index = 0
     while True:
       total_jobs_tried, job_listing_li_index = self.__handle_incrementors(total_jobs_tried, job_listing_li_index)
-      # try:
-      self.__handle_page_context(total_jobs_tried)
-      # except NoSuchElementException:
-      #   logging.info("\tUnable to find next page button, assuming we've handled all job listings.")
-      #   return
+      try:
+        self.__handle_page_context(total_jobs_tried)
+      except NoSuchElementException:
+        logging.info("No job listings left -- Finished with query.")
+        return
+      except NoMatchingJobsPageException:
+        logging.info("No job listings left -- Finished with query.")
+        return
       if self.__is_no_matching_jobs_page():
         logging.info("No matching jobs... Ending query.")
         return
       job_listing_li = self.__get_job_listing_li(job_listing_li_index)
       if job_listing_li is None:
-        logging.info("No job listings left -- Finished")
+        logging.info("No job listings left -- Finished with query.")
         return
       brief_job_listing = self.__build_new_brief_job_listing(job_listing_li)
       brief_job_listing.print()
@@ -159,7 +163,13 @@ class LinkedinJobListingsPage:
       while True:
         try:
           next_page_span.click()
-          time.sleep(3)
+          while True:
+            if self.__is_job_listings_ul():
+              break
+            if self.__is_no_matching_jobs_page():
+              raise NoMatchingJobsPageException()
+            logging.info("Waiting for next page to load...")
+            time.sleep(0.1)
           return
         except ElementNotInteractableException:
           logging.debug("Failed to click next page span... Scrolling down and trying again...")
@@ -278,6 +288,20 @@ class LinkedinJobListingsPage:
     except NoSuchElementException:
       return None
     return job_listing_li
+
+  def __is_job_listings_ul(self) -> bool:
+    try:
+      linkedin_footer = self.__selenium_helper.get_element_by_aria_label(
+        "LinkedIn Footer Content",
+        ElementType.FOOTER,
+        self.__get_main_content_div()
+      )
+      linkedin_footer.find_element(By.XPATH, "..")
+      return True
+    except NoSuchElementException:
+      return False
+    except StaleElementReferenceException:
+      return False
 
   def __get_job_listings_ul(self, timeout=10) -> WebElement | None:
     logging.debug("Getting job listings ul...")

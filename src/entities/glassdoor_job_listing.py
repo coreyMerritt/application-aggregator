@@ -6,6 +6,7 @@ from selenium.webdriver.remote.webelement import WebElement
 from selenium.common.exceptions import NoSuchElementException
 from entities.abc_job_listing import JobListing
 from entities.glassdoor_brief_job_listing import GlassdoorBriefJobListing
+from services.misc.yoe_parser import YoeParser
 
 
 class GlassdoorJobListing(JobListing):
@@ -34,4 +35,9 @@ class GlassdoorJobListing(JobListing):
     if raw_description is None:
       raw_description = ""
     soup = BeautifulSoup(raw_description, "html.parser")
-    self.set_description(soup.get_text(separator="\n", strip=True))
+    description = soup.get_text(separator="\n", strip=True)
+    self.set_description(description)
+    yoe_parser = YoeParser()
+    min_yoe, max_yoe = yoe_parser.parse(description)
+    self.set_min_yoe(min_yoe)
+    self.set_max_yoe(max_yoe)

@@ -75,11 +75,17 @@ class JobMatchingList:
   descriptions: List[str | list] = field(default_factory=list)
 
 @dataclass
+class YearsOfExperience:
+  minimum: int | None = None
+  maximum: int | None = None
+
+@dataclass
 class BotBehavior:
   ignore_jobs_that_demand_cover_letters: bool = False
   pause_every_x_jobs: int = 50
   gold_star: JobMatchingList = field(default_factory=JobMatchingList)
   ignore: JobMatchingList = field(default_factory=JobMatchingList)
+  years_of_experience: YearsOfExperience = field(default_factory=YearsOfExperience)
 
 @dataclass
 class SearchExperience:

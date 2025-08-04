@@ -134,6 +134,11 @@ universal:
       max_age_in_days: 0  # ex) 2
       min_company_rating: 0.0 # ex) 3.0
   bot_behavior:
+    ignore_jobs_that_demand_cover_letters: true
+    years_of_experience:
+      # Max can/should be adjusted, but its highly recommended to leave min as null
+      minimum: null
+      maximum: null   # ex) 5 -- will attempt to ignore all jobs that have an ask for over 5 years of experience
     # Jobs with these keywords will never be filtered out, regardless of the ignore section.
     # Use sparingly.
     gold_star:

@@ -14,6 +14,8 @@ from entities.glassdoor_job_listing import GlassdoorJobListing
 from models.configs.quick_settings import QuickSettings
 from models.enums.element_type import ElementType
 from models.configs.universal_config import UniversalConfig
+from models.enums.platform import Platform
+from services.misc.database_manager import DatabaseManager
 from services.pages.indeed_apply_now_page.indeed_apply_now_page import IndeedApplyNowPage
 from services.misc.selenium_helper import SeleniumHelper
 
@@ -21,6 +23,7 @@ from services.misc.selenium_helper import SeleniumHelper
 class GlassdoorJobListingsPage:
   __driver: uc.Chrome
   __selenium_helper: SeleniumHelper
+  __database_manager: DatabaseManager
   __universal_config: UniversalConfig
   __quick_settings: QuickSettings
   __indeed_apply_now_page: IndeedApplyNowPage
@@ -30,12 +33,14 @@ class GlassdoorJobListingsPage:
     self,
     driver: uc.Chrome,
     selenium_helper: SeleniumHelper,
+    database_manager: DatabaseManager,
     universal_config: UniversalConfig,
     quick_settings: QuickSettings,
     indeed_apply_now_page: IndeedApplyNowPage
   ):
     self.__driver = driver
     self.__selenium_helper = selenium_helper
+    self.__database_manager = database_manager
     self.__universal_config = universal_config
     self.__quick_settings = quick_settings
     self.__indeed_apply_now_page = indeed_apply_now_page
@@ -51,10 +56,10 @@ class GlassdoorJobListingsPage:
     i = 0
     while True:
       i += 1
-      logging.debug("Looping through job listings: %s...", i)
+      logging.debug("Looping through Job Listings: %s...", i)
       job_listing_li = self.__get_job_listing_li(i)
       if job_listing_li is None:
-        logging.info("No job listings remaining. Returning...")
+        logging.info("No Job Listings remaining. Returning...")
         return
       self.__selenium_helper.scroll_into_view(job_listing_li)
       if not self.__is_job_listing(job_listing_li):
@@ -62,17 +67,21 @@ class GlassdoorJobListingsPage:
       brief_job_listing = GlassdoorBriefJobListing(job_listing_li)
       brief_job_listing.print()
       if not brief_job_listing.passes_filter_check(self.__universal_config, self.__quick_settings):
+        self.__add_brief_job_listing_to_db(brief_job_listing)
         continue
       if brief_job_listing.to_minimal_dict() in self.__jobs_applied_to_this_session:
-        logging.info("Ignoring job listing because: we've already applied this session.\n")
+        logging.info("Ignoring Job Listing because: we've already applied this session.\n")
         continue
+      self.__add_brief_job_listing_to_db(brief_job_listing)
       self.__remove_create_job_dialog()
       job_listing_li.click()
       job_listing = self.__build_job_listing(brief_job_listing)
       if not job_listing.passes_filter_check(self.__universal_config, self.__quick_settings):
+        self.__add_job_listing_to_db(job_listing)
         continue
       self.__apply_to_selected_job()
       self.__jobs_applied_to_this_session.append(brief_job_listing.to_minimal_dict())
+      self.__add_job_listing_to_db(job_listing)
       self.__handle_potential_overload()
 
   def __build_job_listing(self, brief_job_listing: GlassdoorBriefJobListing) -> GlassdoorJobListing:
@@ -134,7 +143,7 @@ class GlassdoorJobListingsPage:
         job_listing_li = job_listings_ul.find_element(By.XPATH, f"./li[{i}]")
         return job_listing_li
       except NoSuchElementException:
-        logging.debug("Failed to get job listing li. Trying again...")
+        logging.debug("Failed to get Job Listing li. Trying again...")
         if tries > 21:
           return None
         elif tries > 20:
@@ -143,7 +152,7 @@ class GlassdoorJobListingsPage:
         self.__selenium_helper.scroll_down()
         time.sleep(0.1)
       except StaleElementReferenceException:
-        logging.debug("Failed to get job listing li. Trying again...")
+        logging.debug("Failed to get Job Listing li. Trying again...")
         job_listings_ul = self.__get_job_listings_ul()
         time.sleep(0.1)
 
@@ -252,7 +261,7 @@ class GlassdoorJobListingsPage:
   def __is_job_listing(self, element: WebElement) -> bool:
     attr = element.get_attribute("data-test")
     result = attr is not None and "jobListing" in attr
-    logging.debug("Checked if is job listing: %s", result)
+    logging.debug("Checked if is Job Listing: %s", result)
     return result
 
   def __returned_zero_results(self) -> bool:
@@ -274,3 +283,18 @@ class GlassdoorJobListingsPage:
     ):
       print("\nPausing to allow user to handle existing tabs before overload.")
       input("\tPress enter to proceed...")
+
+  def __add_brief_job_listing_to_db(self, brief_job_listing: GlassdoorBriefJobListing) -> None:
+    self.__database_manager.create_new_brief_job_listing(
+      self.__universal_config,
+      brief_job_listing,
+      Platform.GLASSDOOR
+    )
+
+  def __add_job_listing_to_db(self, job_listing: GlassdoorJobListing) -> None:
+    self.__database_manager.create_new_job_listing(
+      self.__universal_config,
+      job_listing,
+      self.__driver.current_url,
+      Platform.GLASSDOOR
+    )

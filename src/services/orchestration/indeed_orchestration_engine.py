@@ -6,6 +6,7 @@ from selenium.common.exceptions import NoSuchElementException
 from models.configs.indeed_config import IndeedConfig
 from models.configs.quick_settings import QuickSettings
 from models.configs.universal_config import UniversalConfig
+from services.misc.database_manager import DatabaseManager
 from services.misc.selenium_helper import SeleniumHelper
 from services.pages.indeed_login_page import IndeedLoginPage
 from services.pages.indeed_one_time_code_page import IndeedOneTimeCodePage
@@ -24,6 +25,7 @@ class IndeedOrchestrationEngine:
     self,
     driver: uc.Chrome,
     selenium_helper: SeleniumHelper,
+    database_manager: DatabaseManager,
     universal_config: UniversalConfig,
     quick_settings: QuickSettings,
     indeed_config: IndeedConfig
@@ -35,6 +37,7 @@ class IndeedOrchestrationEngine:
     self.__indeed_job_listings_page = IndeedJobListingsPage(
       driver,
       selenium_helper,
+      database_manager,
       universal_config,
       quick_settings,
       indeed_config
@@ -53,7 +56,7 @@ class IndeedOrchestrationEngine:
     self.__indeed_one_time_code_page.wait_for_captcha_resolution()
     self.__go_to_query()
     while not self.__indeed_job_listings_page.is_present():
-      logging.debug("Waiting for job listings page to appear...")
+      logging.debug("Waiting for Job Listings page to appear...")
       time.sleep(0.5)
     self.__indeed_job_listings_page.apply_to_all_matching_jobs()
 

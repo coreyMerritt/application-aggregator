@@ -5,10 +5,24 @@ from models.configs.universal_config import UniversalConfig
 
 
 class JobListing(BriefJobListing):
+  __min_yoe: int | None = None
+  __max_yoe: int | None = None
   __description: str
+
+  def get_min_yoe(self) -> int | None:
+    return self.__min_yoe
+
+  def get_max_yoe(self) -> int | None:
+    return self.__max_yoe
 
   def get_description(self) -> str:
     return self.__description
+
+  def set_min_yoe(self, yoe: int | None) -> None:
+    self.__min_yoe = yoe
+
+  def set_max_yoe(self, yoe: int | None) -> None:
+    self.__max_yoe = yoe
 
   def set_description(self, description: str) -> None:
     self.__description = description
@@ -20,25 +34,25 @@ class JobListing(BriefJobListing):
         return False
       else:
         if self._passes_ignore_filters(universal_config):
-          logging.info("Job Listing passes filter check.\n")
+          logging.info("Job Listing passes filter check.")
           return True
         else:
           logging.info("Ignoring Job Listing because ignore term was found.\n")
           return False
     elif quick_settings.bot_behavior.gold_star_only:
       if self._is_gold_star_listing(universal_config):
-        logging.info("Job Listing passes because its a gold star.\n")
+        logging.info("Job Listing passes because its a gold star.")
         return True
       else:
         logging.info("Ignoring Job Listing because it is not a gold star.\n")
         return False
     else:
       if self._is_gold_star_listing(universal_config):
-        logging.info("Job Listing passes because its a gold star.\n")
+        logging.info("Job Listing passes because its a gold star.")
         return True
       else:
         if self._passes_ignore_filters(universal_config):
-          logging.info("Job Listing passes because it matches no terms in ignore.\n")
+          logging.info("Job Listing passes because it matches no terms in ignore.")
           return True
         else:
           logging.info("Ignoring Job Listing because ignore term was found.\n")
@@ -69,6 +83,7 @@ class JobListing(BriefJobListing):
       and self._company_is_passable(universal_config)
       and self._location_is_passable(universal_config)
       and self._pay_is_passable(universal_config.search.salary)
+      and self._yoe_is_passable(universal_config)
       and self._description_is_passable(universal_config)
     )
 
@@ -93,10 +108,28 @@ class JobListing(BriefJobListing):
       "description": self.get_description()
     }
 
+  def _yoe_is_passable(self, universal_config: UniversalConfig) -> bool:
+    min_yoe_desired = universal_config.bot_behavior.years_of_experience.minimum
+    max_yoe_desired = universal_config.bot_behavior.years_of_experience.maximum
+    if self.__min_yoe and max_yoe_desired and max_yoe_desired < self.__min_yoe:
+      logging.info("Job requires too many Years of Experience.")
+      self.set_ignore_category("Min YoE")
+      self.set_ignore_term(str(self.__min_yoe))
+      return False
+    if self.__max_yoe and min_yoe_desired and min_yoe_desired < self.__max_yoe:
+      logging.info("Job asks for too few Years of Experience.")
+      self.set_ignore_category("Max YoE")
+      self.set_ignore_term(str(self.__max_yoe))
+      return False
+    return True
+
   def _description_is_passable(self, universal_config: UniversalConfig) -> bool:
     description = self.get_description().lower().strip()
     for description_to_ignore in universal_config.bot_behavior.ignore.descriptions:
       if self._phrase_is_in_phrase(description_to_ignore, description):
         logging.info("Found ignore term in description: %s.", description_to_ignore)
+        description_to_ignore = str(description_to_ignore)
+        self.set_ignore_category("Description")
+        self.set_ignore_term(description_to_ignore)
         return False
     return True

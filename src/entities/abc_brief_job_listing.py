@@ -12,6 +12,8 @@ class BriefJobListing(ABC):
   __location: str
   __min_pay: float | None = None
   __max_pay: float | None = None
+  __ignore_category: str | None = None
+  __ignore_term: str | None = None
 
   def get_title(self) -> str:
     return self.__title
@@ -28,6 +30,12 @@ class BriefJobListing(ABC):
   def get_max_pay(self) -> float | None:
     return self.__max_pay
 
+  def get_ignore_category(self) -> str | None:
+    return self.__ignore_category
+
+  def get_ignore_term(self) -> str | None:
+    return self.__ignore_term
+
   def set_title(self, title: str) -> None:
     self.__title = title
 
@@ -42,6 +50,12 @@ class BriefJobListing(ABC):
 
   def set_max_pay(self, pay: float | None) -> None:
     self.__max_pay = pay
+
+  def set_ignore_category(self, category: str | None) -> None:
+    self.__ignore_category = category
+
+  def set_ignore_term(self, term: str | None) -> None:
+    self.__ignore_term = term
 
   def passes_filter_check(self, universal_config: UniversalConfig, quick_settings: QuickSettings) -> bool:
     if quick_settings.bot_behavior.platinum_star_only:
@@ -61,6 +75,7 @@ class BriefJobListing(ABC):
         return True
       else:
         logging.info("Ignoring Brief Job Listing because it is not a gold star.\n")
+        self.set_ignore_category("Greedy Non-Inclusion")
         return False
     else:
       if self._is_gold_star_listing(universal_config):
@@ -112,6 +127,7 @@ class BriefJobListing(ABC):
     for gold_star_location in universal_config.bot_behavior.gold_star.locations:
       if self._phrase_is_in_phrase(gold_star_location, location):
         return True
+    self.set_ignore_category("Greedy Non-Inclusion")
     return False
 
   def _passes_ignore_filters(self, universal_config: UniversalConfig) -> bool:
@@ -127,6 +143,9 @@ class BriefJobListing(ABC):
     for title_to_ignore in universal_config.bot_behavior.ignore.titles:
       if self._phrase_is_in_phrase(title_to_ignore, title):
         logging.info("Found ignore term in title: %s", title_to_ignore)
+        assert isinstance(title_to_ignore, str)
+        self.set_ignore_category("Title")
+        self.set_ignore_term(title_to_ignore)
         return False
     return True
 
@@ -135,6 +154,9 @@ class BriefJobListing(ABC):
     for company_to_ignore in univseral_config.bot_behavior.ignore.companies:
       if self._phrase_is_in_phrase(company_to_ignore, company):
         logging.info("Found ignore term in company: %s", company_to_ignore)
+        assert isinstance(company_to_ignore, str)
+        self.set_ignore_category("Company")
+        self.set_ignore_term(company_to_ignore)
         return False
     return True
 
@@ -143,6 +165,9 @@ class BriefJobListing(ABC):
     for location_to_ignore in universal_config.bot_behavior.ignore.locations:
       if self._phrase_is_in_phrase(location_to_ignore, location):
         logging.info("Found ignore term in location: %s", location_to_ignore)
+        assert isinstance(location_to_ignore, str)
+        self.set_ignore_category("Location")
+        self.set_ignore_term(location_to_ignore)
         return False
     return True
 
@@ -153,6 +178,8 @@ class BriefJobListing(ABC):
         expected_salary.min - self.__max_pay,
         expected_salary.min
       )
+      self.set_ignore_category("Max Pay")
+      self.set_ignore_term(str(self.__max_pay))
       return False
     elif self.__min_pay and expected_salary.max < self.__min_pay:
       logging.info(
@@ -160,6 +187,8 @@ class BriefJobListing(ABC):
         expected_salary.max - self.__min_pay,
         expected_salary.max
       )
+      self.set_ignore_category("Min Pay")
+      self.set_ignore_term(str(self.__min_pay))
       return False
     return True
 

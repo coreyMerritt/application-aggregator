@@ -3,11 +3,9 @@ from sqlalchemy import Column, DateTime, Float, Integer, String
 from models.db.base import Base
 
 
-class JobApplicationORM(Base):
-  __tablename__ = 'job_applications'
+class BriefJobListingORM(Base):
+  __tablename__ = 'brief_job_listings'
   id = Column(Integer, primary_key=True)
-  platform = Column(String)
-  url = Column(String)
   first_name = Column(String)
   last_name = Column(String)
   job_title = Column(String)
@@ -15,4 +13,7 @@ class JobApplicationORM(Base):
   location = Column(String)
   min_pay = Column(Float, nullable=True)
   max_pay = Column(Float, nullable=True)
+  platform = Column(String)
+  ignore_category = Column(String, nullable=True)
+  ignore_term = Column(String, nullable=True)
   timestamp = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))

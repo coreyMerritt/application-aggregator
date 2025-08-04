@@ -80,6 +80,7 @@ class Start:
     indeed_orchestration_engine = IndeedOrchestrationEngine(
       self.__driver,
       self.__selenium_helper,
+      self.__database_manager,
       self.__config.universal,
       self.__config.quick_settings,
       self.__config.indeed
@@ -94,6 +95,7 @@ class Start:
     glassdoor_orchestration_engine = GlassdoorOrchestrationEngine(
       self.__driver,
       self.__selenium_helper,
+      self.__database_manager,
       self.__config.universal,
       self.__config.quick_settings,
       self.__config.glassdoor,

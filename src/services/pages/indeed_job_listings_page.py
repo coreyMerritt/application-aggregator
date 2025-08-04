@@ -14,6 +14,8 @@ from models.configs.indeed_config import IndeedConfig
 from models.configs.quick_settings import QuickSettings
 from models.configs.universal_config import UniversalConfig
 from models.enums.element_type import ElementType
+from models.enums.platform import Platform
+from services.misc.database_manager import DatabaseManager
 from services.misc.selenium_helper import SeleniumHelper
 from services.pages.indeed_apply_now_page.indeed_apply_now_page import IndeedApplyNowPage
 
@@ -21,6 +23,7 @@ from services.pages.indeed_apply_now_page.indeed_apply_now_page import IndeedApp
 class IndeedJobListingsPage:
   __driver: uc.Chrome
   __selenium_helper: SeleniumHelper
+  __database_manager: DatabaseManager
   __universal_config: UniversalConfig
   __quick_settings: QuickSettings
   __indeed_config: IndeedConfig
@@ -32,12 +35,14 @@ class IndeedJobListingsPage:
     self,
     driver: uc.Chrome,
     selenium_helper: SeleniumHelper,
+    database_manager: DatabaseManager,
     universal_config: UniversalConfig,
     quick_settings: QuickSettings,
     indeed_config: IndeedConfig
   ):
     self.__driver = driver
     self.__selenium_helper = selenium_helper
+    self.__database_manager = database_manager
     self.__universal_config = universal_config
     self.__quick_settings = quick_settings
     self.__indeed_config = indeed_config
@@ -66,25 +71,27 @@ class IndeedJobListingsPage:
         if self.__is_a_next_page():
           self.__go_to_next_page()
         else:
-          logging.info("End of job listings.")
+          logging.info("End of Job Listings.")
           return
       elif job_listing_li_number in INVISIBLE_AD_INDEXES + VISIBLE_AD_INDEXES:
-        logging.debug("Job listing is an ad. Skipping...")
+        logging.debug("Job Listing is an ad. Skipping...")
         continue  # Don't try to run against ads
       job_listing_li = self.__get_job_listing_li(job_listing_li_number)
       if job_listing_li is None:
-        logging.info("End of job listings.")
+        logging.info("End of Job Listings.")
         return
       brief_job_listing = self.__build_brief_job_listing(job_listing_li)
       if brief_job_listing is None:
-        logging.debug("Skipping a fake job listing / advertisement...")
+        logging.debug("Skipping a fake Job Listing / advertisement...")
         continue
       brief_job_listing.print()
       if not brief_job_listing.passes_filter_check(self.__universal_config, self.__quick_settings):
+        self.__add_brief_job_listing_to_db(brief_job_listing)
         continue
       if brief_job_listing.to_minimal_dict() in self.__jobs_applied_to_this_session:
-        logging.info("Ignoring job listing because: we've already applied this session.\n")
+        logging.info("Ignoring Job Listing because: we've already applied this session.\n")
         continue
+      self.__add_brief_job_listing_to_db(brief_job_listing)
       self.__open_job_in_new_tab(job_listing_li)
       try:
         self.__wait_for_new_job_tab_to_load()
@@ -97,12 +104,14 @@ class IndeedJobListingsPage:
       if not job_listing.passes_filter_check(self.__universal_config, self.__quick_settings):
         self.__driver.close()
         self.__driver.switch_to.window(self.__driver.window_handles[0])
+        self.__add_job_listing_to_db(job_listing)
         continue
       while not self.__is_apply_now_span() and not self.__is_apply_on_company_site_span():
         logging.debug("Waiting for apply button...")
         time.sleep(0.5)
       self.__apply_to_job(brief_job_listing)
       self.__driver.switch_to.window(self.__driver.window_handles[0])
+      self.__add_job_listing_to_db(job_listing)
       self.__handle_potential_overload()
 
   def __build_brief_job_listing(self, job_listing_li: WebElement) -> Optional[IndeedBriefJobListing]:
@@ -209,7 +218,7 @@ class IndeedJobListingsPage:
         return job_listings_ul
       except NoSuchElementException:
         pass
-    raise NoSuchElementException("Failed to find job listings ul.")
+    raise NoSuchElementException("Failed to find Job Listings ul.")
 
   def __get_next_page_anchor(self) -> WebElement:
     page_buttons_ul = self.__get_page_buttons_ul()
@@ -323,3 +332,18 @@ class IndeedJobListingsPage:
       self.__driver.get(company_site_link)
     except TimeoutException:
       logging.warning("Timed out waiting for company website. Proceeding anyway...")
+
+  def __add_brief_job_listing_to_db(self, brief_job_listing: IndeedBriefJobListing) -> None:
+    self.__database_manager.create_new_brief_job_listing(
+      self.__universal_config,
+      brief_job_listing,
+      Platform.INDEED
+    )
+
+  def __add_job_listing_to_db(self, job_listing: IndeedJobListing) -> None:
+    self.__database_manager.create_new_job_listing(
+      self.__universal_config,
+      job_listing,
+      self.__driver.current_url,
+      Platform.INDEED
+    )

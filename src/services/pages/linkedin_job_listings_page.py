@@ -70,25 +70,27 @@ class LinkedinJobListingsPage:
       try:
         self.__handle_page_context(total_jobs_tried)
       except NoSuchElementException:
-        logging.info("No job listings left -- Finished with query.")
+        logging.info("No Job Listings left -- Finished with query.")
         return
       except NoMatchingJobsPageException:
-        logging.info("No job listings left -- Finished with query.")
+        logging.info("No Job Listings left -- Finished with query.")
         return
       if self.__is_no_matching_jobs_page():
         logging.info("No matching jobs... Ending query.")
         return
       job_listing_li = self.__get_job_listing_li(job_listing_li_index)
       if job_listing_li is None:
-        logging.info("No job listings left -- Finished with query.")
+        logging.info("No Job Listings left -- Finished with query.")
         return
       brief_job_listing = self.__build_new_brief_job_listing(job_listing_li)
       brief_job_listing.print()
       if not brief_job_listing.passes_filter_check(self.__universal_config, self.__quick_settings):
-        logging.info("Ignoring brief job listing because it doesn't pass the filter check. Skipping...")
+        logging.info("Ignoring Brief Job Listing because it doesn't pass the filter check. Skipping...")
+        self.__add_brief_job_listing_to_db(brief_job_listing)
         continue
+      self.__add_brief_job_listing_to_db(brief_job_listing)
       if brief_job_listing.to_minimal_dict() in self.__jobs_applied_to_this_session:
-        logging.info("Ignoring brief job listing because we've already applied this session. Skipping...")
+        logging.info("Ignoring Brief Job Listing because we've already applied this session. Skipping...")
         continue
       if self.__something_went_wrong():
         logging.info('"Something went wrong", likely rate limited behavior. Skipping...')
@@ -99,20 +101,19 @@ class LinkedinJobListingsPage:
         job_listing_li = self.__get_job_listing_li(job_listing_li_index)
       job_listing = self.__build_new_job_listing(brief_job_listing)
       if not job_listing.passes_filter_check(self.__universal_config, self.__quick_settings):
-        logging.info("Ignoring job listing because it doesn't pass the filter check. Skipping...")
+        logging.info("Ignoring Job Listing because it doesn't pass the filter check. Skipping...")
+        self.__add_job_listing_to_db(job_listing)
         continue
       if not self.__is_apply_button() and not self.__is_easy_apply_button():
-        logging.info("This job listing has no apply button. Skipping...")
+        logging.info("This Job Listing has no apply button. Skipping...")
         continue
-      self.__apply_to_selected_job()
+      try:
+        self.__apply_to_selected_job()
+      except NoMatchingJobsPageException:
+        input("Lets get a proper logging statement in here -- what happened?")
       self.__driver.switch_to.window(self.__driver.window_handles[0])
       self.__jobs_applied_to_this_session.append(brief_job_listing.to_minimal_dict())
-      self.__database_manager.create_new_job_application_entry(
-        self.__universal_config,
-        brief_job_listing,
-        self.__driver.current_url,
-        Platform.LINKEDIN
-      )
+      self.__add_job_listing_to_db(job_listing)
       self.__handle_potential_overload()
 
   def __handle_incrementors(self, total_jobs_tried: int, job_listing_li_index: int) -> Tuple[int, int]:
@@ -133,9 +134,9 @@ class LinkedinJobListingsPage:
     while time.time() - start_time < timeout:
       if self.__job_listing_li_is_active(job_listing_li):
         return
-      logging.debug("Waiting for job listing li to be active to confirm job listing click...")
+      logging.debug("Waiting for Job Listing li to be active to confirm Job Listing click...")
       time.sleep(0.1)
-    raise TimeoutError("Timed out waiting for full job listing to load.")
+    raise TimeoutError("Timed out waiting for full Job Listing to load.")
 
   def __job_listing_li_is_active(self, job_listing_li: WebElement) -> bool:
     active_class = "job-card-job-posting-card-wrapper--active"
@@ -153,7 +154,7 @@ class LinkedinJobListingsPage:
         return
       except ElementClickInterceptedException:
         self.__handle_potential_problems()
-        logging.debug("Attempting to click job listing li...")
+        logging.debug("Attempting to click Job Listing li...")
         time.sleep(0.1)
 
   def __handle_page_context(self, total_jobs_tried: int) -> None:
@@ -304,7 +305,7 @@ class LinkedinJobListingsPage:
       return False
 
   def __get_job_listings_ul(self, timeout=10) -> WebElement | None:
-    logging.debug("Getting job listings ul...")
+    logging.debug("Getting Job Listings ul...")
     start_time = time.time()
     while time.time() - start_time < timeout:
       try:
@@ -316,12 +317,12 @@ class LinkedinJobListingsPage:
         job_listings_ul = linkedin_footer.find_element(By.XPATH, "..")
         return job_listings_ul
       except NoSuchElementException:
-        logging.debug("Waiting for job listings ul...")
+        logging.debug("Waiting for Job Listings ul...")
         time.sleep(0.1)
       except StaleElementReferenceException:
-        logging.debug("Waiting for job listings ul...")
+        logging.debug("Waiting for Job Listings ul...")
         time.sleep(0.1)
-    raise NoSuchElementException("Failed to find job listings ul.")
+    raise NoSuchElementException("Failed to find Job Listings ul.")
 
   def __get_main_content_div(self) -> WebElement | None:
     main_content_div_id = "main"
@@ -417,6 +418,8 @@ class LinkedinJobListingsPage:
       time.sleep(5)   # It seems that if you don't wait here, the issue will arise again -- likely rate limiting
     elif self.__is_rate_limited_page():
       self.__handle_rate_limited_page()
+    elif self.__is_no_matching_jobs_page():
+      raise NoMatchingJobsPageException()
 
   def __something_went_wrong(self) -> bool:
     return self.__selenium_helper.exact_text_is_present(
@@ -459,3 +462,18 @@ class LinkedinJobListingsPage:
     ):
       print("\nPausing to allow user to handle existing tabs before overload.")
       input("\tPress enter to proceed...")
+
+  def __add_brief_job_listing_to_db(self, brief_job_listing: LinkedinBriefJobListing) -> None:
+    self.__database_manager.create_new_brief_job_listing(
+      self.__universal_config,
+      brief_job_listing,
+      Platform.LINKEDIN
+    )
+
+  def __add_job_listing_to_db(self, job_listing: LinkedinJobListing) -> None:
+    self.__database_manager.create_new_job_listing(
+      self.__universal_config,
+      job_listing,
+      self.__driver.current_url,
+      Platform.LINKEDIN
+    )

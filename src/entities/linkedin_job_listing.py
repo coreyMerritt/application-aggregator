@@ -3,6 +3,7 @@ from bs4 import BeautifulSoup
 from selenium.webdriver.remote.webelement import WebElement
 from entities.abc_job_listing import JobListing
 from entities.linkedin_brief_job_listing import LinkedinBriefJobListing
+from services.misc.yoe_parser import YoeParser
 
 
 class LinkedinJobListing(JobListing):
@@ -16,7 +17,12 @@ class LinkedinJobListing(JobListing):
     self.__wait_for_populated_description(job_description_content_div)
     raw_description = job_description_content_div.get_attribute("outerHTML") or ""
     soup = BeautifulSoup(raw_description, "html.parser")
-    self.set_description(soup.get_text(separator="\n", strip=True))
+    description = soup.get_text(separator="\n", strip=True)
+    self.set_description(description)
+    yoe_parser = YoeParser()
+    min_yoe, max_yoe = yoe_parser.parse(description)
+    self.set_min_yoe(min_yoe)
+    self.set_max_yoe(max_yoe)
 
   def __wait_for_populated_description(self, element: WebElement, timeout=5.0) -> None:
     start = time.time()

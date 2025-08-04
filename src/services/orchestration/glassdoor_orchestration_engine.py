@@ -6,6 +6,7 @@ from models.configs.glassdoor_config import GlassdoorConfig
 from models.configs.quick_settings import QuickSettings
 from models.configs.universal_config import UniversalConfig
 from models.enums.element_type import ElementType
+from services.misc.database_manager import DatabaseManager
 from services.query_url_builders.glassdoor_query_url_builder import GlassdoorQueryUrlBuilder
 from services.misc.selenium_helper import SeleniumHelper
 from services.pages.indeed_apply_now_page.indeed_apply_now_page import IndeedApplyNowPage
@@ -24,6 +25,7 @@ class GlassdoorOrchestrationEngine:
     self,
     driver: uc.Chrome,
     selenium_helper: SeleniumHelper,
+    database_manager: DatabaseManager,
     universal_config: UniversalConfig,
     quick_settings: QuickSettings,
     glassdoor_config: GlassdoorConfig,
@@ -36,6 +38,7 @@ class GlassdoorOrchestrationEngine:
     self.__glassdoor_job_listings_page = GlassdoorJobListingsPage(
       driver,
       selenium_helper,
+      database_manager,
       universal_config,
       quick_settings,
       indeed_apply_now_page

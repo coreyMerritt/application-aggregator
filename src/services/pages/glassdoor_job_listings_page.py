@@ -11,6 +11,7 @@ from selenium.common.exceptions import (
 )
 from entities.glassdoor_brief_job_listing import GlassdoorBriefJobListing
 from entities.glassdoor_job_listing import GlassdoorJobListing
+from exceptions.no_more_job_listings_exception import NoMoreJobListingsException
 from models.configs.quick_settings import QuickSettings
 from models.enums.element_type import ElementType
 from models.configs.universal_config import UniversalConfig
@@ -54,11 +55,19 @@ class GlassdoorJobListingsPage:
       logging.debug("Waiting for page to load...")
       time.sleep(0.5)
     i = 0
+    while self.__is_show_more_jobs_span():
+      try:
+        self.__click_show_more_jobs_button()
+        time.sleep(0.1)
+      except NoSuchElementException:
+        time.sleep(0.1)
     while True:
       i += 1
       logging.debug("Looping through Job Listings: %s...", i)
-      job_listing_li = self.__get_job_listing_li(i)
-      if job_listing_li is None:
+      self.__remove_create_job_dialog()
+      try:
+        job_listing_li = self.__get_job_listing_li(i)
+      except NoMoreJobListingsException:
         logging.info("No Job Listings remaining. Returning...")
         return
       self.__selenium_helper.scroll_into_view(job_listing_li)
@@ -118,52 +127,72 @@ class GlassdoorJobListingsPage:
     try_again_button.click()
     self.__wait_for_job_info_div()
 
-  def __show_more_jobs(self) -> None:
+  def __get_job_listings_ul(self) -> WebElement:
     try:
-      show_more_jobs_button = self.__get_show_more_jobs_button()
-    except NoSuchElementException:
-      logging.info("Finished with this query. Continuing to next query...")
-      return
-    try:
-      show_more_jobs_button.click()
+      job_listings_ul = self.__selenium_helper.get_element_by_aria_label("Jobs List", ElementType.UL)
     except ElementClickInterceptedException:
       self.__remove_create_job_dialog()
-      show_more_jobs_button.click()
-
-  def __get_job_listings_ul(self) -> WebElement:
-    job_listings_ul = self.__selenium_helper.get_element_by_aria_label("Jobs List", ElementType.UL)
+      job_listings_ul = self.__selenium_helper.get_element_by_aria_label("Jobs List", ElementType.UL)
+    except NoSuchElementException:
+      self.__remove_create_job_dialog()
+      job_listings_ul = self.__selenium_helper.get_element_by_aria_label("Jobs List", ElementType.UL)
     return job_listings_ul
 
-  def __get_job_listing_li(self, i: int) -> WebElement | None:
+  def __get_job_listing_li(self, index: int) -> WebElement:
     job_listings_ul = self.__get_job_listings_ul()
-    tries = 0
     while True:
       try:
-        tries += 1
-        job_listing_li = job_listings_ul.find_element(By.XPATH, f"./li[{i}]")
+        job_listing_li = job_listings_ul.find_element(By.XPATH, f"./li[{index}]")
         return job_listing_li
-      except NoSuchElementException:
-        logging.debug("Failed to get Job Listing li. Trying again...")
-        if tries > 21:
-          return None
-        elif tries > 20:
-          self.__show_more_jobs()
-          time.sleep(1)
-        self.__selenium_helper.scroll_down()
-        time.sleep(0.1)
+      except NoSuchElementException as e:
+        if self.__is_show_more_jobs_span():
+          self.__click_show_more_jobs_button()
+          self.__wait_for_new_job_listing_li(index + 1)
+        else:
+          raise NoMoreJobListingsException() from e
       except StaleElementReferenceException:
         logging.debug("Failed to get Job Listing li. Trying again...")
         job_listings_ul = self.__get_job_listings_ul()
-        time.sleep(0.1)
 
-  def __get_show_more_jobs_button(self) -> WebElement:
+  def __is_show_more_jobs_span(self) -> bool:
     self.__selenium_helper.scroll_to_bottom()
     try:
-      show_more_jobs_span = self.__selenium_helper.get_element_by_exact_text("Show more jobs", ElementType.SPAN)
-    except ValueError as e:
-      raise NoSuchElementException("Show more jobs button is not present.") from e
-    show_more_jobs_button = show_more_jobs_span.find_element(By.XPATH, "../..")
-    return show_more_jobs_button
+      job_listings_ul = self.__get_job_listings_ul()
+      job_listings_ul.find_element(By.XPATH, "../div/div/button")
+      return True
+    except NoSuchElementException:
+      return False
+
+  def __click_show_more_jobs_button(self) -> None:
+    self.__selenium_helper.scroll_to_bottom()
+    while True:
+      try:
+        while True:
+          try:
+            job_listings_ul = self.__get_job_listings_ul()
+            break
+          except NoSuchElementException:
+            logging.debug("Waiting for job listings ul...")
+            time.sleep(0.1)
+        show_more_jobs_button = job_listings_ul.find_element(By.XPATH, "../div/div/button")
+        show_more_jobs_button.click()
+      except ElementClickInterceptedException:
+        self.__remove_create_job_dialog()
+        time.sleep(0.1)
+      except StaleElementReferenceException:
+        time.sleep(0.1)
+
+  def __wait_for_new_job_listing_li(self, index: int, timeout=10) -> None:
+    start_time = time.time()
+    job_listings_ul = self.__get_job_listings_ul()
+    while time.time() - start_time < timeout:
+      try:
+        job_listings_ul.find_element(By.XPATH, f"./li[{index}]")
+        return
+      except NoSuchElementException:
+        logging.debug("Waiting for job listing li...")
+        time.sleep(0.1)
+    raise NoSuchElementException("Failed waiting for job listing li.")
 
   def __apply_to_selected_job(self) -> None:
     logging.debug("Applying to selected job...")

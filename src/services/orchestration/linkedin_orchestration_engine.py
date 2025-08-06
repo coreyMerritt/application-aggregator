@@ -14,9 +14,8 @@ from services.query_url_builders.linkedin_query_url_builder import LinkedinQuery
 
 class LinkedinOrchestrationEngine:
   __driver: uc.Chrome
-  __linkedin_config: LinkedinConfig
   __universal_config: UniversalConfig
-  __database_manager: DatabaseManager
+  __quick_settings: QuickSettings
   __linkedin_login_page: LinkedinLoginPage
   __linkedin_job_listings_page: LinkedinJobListingsPage
 
@@ -31,8 +30,8 @@ class LinkedinOrchestrationEngine:
     proxy_manager: ProxyManager
   ):
     self.__driver = driver
-    self.__linkedin_config = linkedin_config
     self.__universal_config = universal_config
+    self.__quick_settings = quick_settings
     self.__linkedin_login_page = LinkedinLoginPage(
       driver,
       selenium_helper,
@@ -59,7 +58,7 @@ class LinkedinOrchestrationEngine:
       self.__linkedin_job_listings_page.handle_current_query()
 
   def __go_to_query(self, search_term: str) -> None:
-    query_url_builder = LinkedinQueryUrlBuilder(self.__linkedin_config, self.__universal_config)
+    query_url_builder = LinkedinQueryUrlBuilder(self.__universal_config, self.__quick_settings)
     query_url = query_url_builder.build(search_term)
     logging.debug("Going to %s", query_url)
     self.__driver.get(query_url)

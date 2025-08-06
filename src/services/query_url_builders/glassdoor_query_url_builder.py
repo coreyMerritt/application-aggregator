@@ -1,7 +1,9 @@
+from models.configs.quick_settings import QuickSettings
 from models.configs.universal_config import UniversalConfig
 
 
 class GlassdoorQueryUrlBuilder:
+  __easy_apply_only: bool
   __location: str
   __remote: bool
   __min_company_rating: float
@@ -10,7 +12,8 @@ class GlassdoorQueryUrlBuilder:
   __max_salary: int
   __url: str
 
-  def __init__(self, universal_config: UniversalConfig):
+  def __init__(self, universal_config: UniversalConfig, quick_settings: QuickSettings):
+    self.__easy_apply_only = quick_settings.bot_behavior.easy_apply_only.glassdoor
     if universal_config.search.location.city:
       self.__location = universal_config.search.location.city
     else:
@@ -31,6 +34,7 @@ class GlassdoorQueryUrlBuilder:
     self.__add_max_age()
     self.__add_min_salary()
     self.__add_max_salary()
+    self.__add_easy_apply_only()
     return self.__url
 
   def __add_base(self) -> None:
@@ -62,3 +66,7 @@ class GlassdoorQueryUrlBuilder:
 
   def __add_max_salary(self) -> None:
     self.__url += f"&maxSalary={self.__max_salary}"
+
+  def __add_easy_apply_only(self) -> None:
+    if self.__easy_apply_only:
+      self.__url += "&applicationType=1"

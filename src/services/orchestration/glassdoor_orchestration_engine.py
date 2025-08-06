@@ -19,6 +19,7 @@ class GlassdoorOrchestrationEngine:
   __driver: uc.Chrome
   __selenium_helper: SeleniumHelper
   __universal_config: UniversalConfig
+  __quick_settings: QuickSettings
   __glassdoor_login_page: GlassdoorLoginPage
   __glassdoor_job_listings_page: GlassdoorJobListingsPage
 
@@ -35,6 +36,7 @@ class GlassdoorOrchestrationEngine:
     self.__driver = driver
     self.__selenium_helper = selenium_helper
     self.__universal_config = universal_config
+    self.__quick_settings = quick_settings
     self.__glassdoor_login_page = GlassdoorLoginPage(driver, selenium_helper, glassdoor_config)
     self.__glassdoor_job_listings_page = GlassdoorJobListingsPage(
       driver,
@@ -60,7 +62,7 @@ class GlassdoorOrchestrationEngine:
     search_terms = self.__universal_config.search.terms.match
     try:
       for search_term in search_terms:
-        query_builder = GlassdoorQueryUrlBuilder(self.__universal_config)
+        query_builder = GlassdoorQueryUrlBuilder(self.__universal_config, self.__quick_settings)
         query_url = query_builder.build(search_term)
         self.__go_to_query_url(query_url)
         self.__glassdoor_job_listings_page.handle_current_query()

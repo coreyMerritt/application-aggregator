@@ -1,6 +1,5 @@
 from typing import List
-
-from models.configs.linkedin_config import LinkedinConfig
+from models.configs.quick_settings import QuickSettings
 from models.configs.universal_config import UniversalConfig
 
 
@@ -16,7 +15,11 @@ class LinkedinQueryUrlBuilder:
   __easy_apply_only: bool
   __url: str
 
-  def __init__(self, linkedin_config: LinkedinConfig, universal_config: UniversalConfig):
+  def __init__(
+    self,
+    universal_config: UniversalConfig,
+    quick_settings: QuickSettings
+  ):
     self.__ignore_terms = universal_config.search.terms.ignore
     self.__location = universal_config.search.location.city
     self.__max_age_in_days = universal_config.search.misc.max_age_in_days
@@ -25,7 +28,7 @@ class LinkedinQueryUrlBuilder:
     self.__entry_level = universal_config.search.experience.entry
     self.__mid_level = universal_config.search.experience.mid
     self.__senior_level = universal_config.search.experience.senior
-    self.__easy_apply_only = linkedin_config.easy_apply_only
+    self.__easy_apply_only = quick_settings.bot_behavior.easy_apply_only.linkedin
     self.__url = ""
 
   def build(self, search_term: str) -> str:

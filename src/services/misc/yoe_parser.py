@@ -107,5 +107,6 @@ class YoeParser:
             matching_nums.append(int(term))
           elif term in self.__word_to_int:
             matching_nums.append(self.__word_to_int[term])
-        return max(matching_nums), None
+        if len(matching_nums) != 0:
+          return max(matching_nums), None
     return None, None

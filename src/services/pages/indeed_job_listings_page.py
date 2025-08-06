@@ -109,6 +109,11 @@ class IndeedJobListingsPage:
       while not self.__is_apply_now_span() and not self.__is_apply_on_company_site_span():
         logging.debug("Waiting for apply button...")
         time.sleep(0.5)
+      if self.__quick_settings.bot_behavior.easy_apply_only.indeed and self.__is_apply_on_company_site_span():
+        logging.info("Ignoring because job is not easy apply...")
+        self.__driver.close()
+        self.__driver.switch_to.window(self.__driver.window_handles[0])
+        continue
       self.__apply_to_job(brief_job_listing)
       self.__driver.switch_to.window(self.__driver.window_handles[0])
       self.__add_job_listing_to_db(job_listing)
@@ -166,11 +171,9 @@ class IndeedJobListingsPage:
       self.__jobs_applied_to_this_session.append(brief_job_listing.to_minimal_dict())
       return
     elif self.__is_apply_on_company_site_span():
-      if not self.__indeed_config.apply_now_only:
-        self.__go_to_company_site()
-        self.__jobs_applied_to_this_session.append(brief_job_listing.to_minimal_dict())
-      else:
-        self.__driver.close()
+      assert not self.__quick_settings.bot_behavior.easy_apply_only.indeed
+      self.__go_to_company_site()
+      self.__jobs_applied_to_this_session.append(brief_job_listing.to_minimal_dict())
       return
     elif self.__is_applied_span():
       return

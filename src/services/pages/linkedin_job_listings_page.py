@@ -183,6 +183,7 @@ class LinkedinJobListingsPage:
     if self.__is_easy_apply_button():
       self.__apply_on_linkedin()
     elif self.__is_apply_button():
+      assert not self.__quick_settings.bot_behavior.easy_apply_only.linkedin
       self.__apply_on_company_site()
     else:
       raise RuntimeError("An apply button is found, but doesn't meet criteria of either apply button.")
@@ -450,7 +451,7 @@ class LinkedinJobListingsPage:
   def __handle_rate_limited_page(self) -> None:
     # TODO: Still brainstorming how to properly handle this
     self.__proxy_manager.log_rate_limit_block(Platform.LINKEDIN)
-    input("Rate limited. :( Finish what's available and start again...")
+    input("Rate limited. :( Finish what's available and start again.")
     sys.exit(0)
 
   def __handle_potential_overload(self) -> None:

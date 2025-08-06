@@ -67,6 +67,7 @@ class GlassdoorJobListingsPage:
       except NoSuchElementException:
         time.sleep(0.1)
     while True:
+      input("...")
       i += 1
       logging.debug("Looping through Job Listings: %s...", i)
       self.__remove_create_job_dialog()

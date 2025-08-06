@@ -4,7 +4,6 @@ import undetected_chromedriver as uc
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import JavascriptException, NoSuchElementException
 from models.configs.linkedin_config import LinkedinConfig
-from models.enums.element_type import ElementType
 from services.misc.selenium_helper import SeleniumHelper
 
 

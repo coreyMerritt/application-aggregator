@@ -2,8 +2,7 @@ import logging
 import time
 import undetected_chromedriver as uc
 from selenium.webdriver.common.by import By
-from selenium.webdriver.remote.webelement import WebElement
-from selenium.common.exceptions import NoSuchElementException
+from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException
 from models.configs.indeed_config import IndeedConfig
 from models.enums.element_type import ElementType
 from services.misc.selenium_helper import SeleniumHelper
@@ -54,11 +53,15 @@ class IndeedLoginPage:
       time.sleep(0.5)
 
   def __click_sign_in_anchor(self) -> None:
-    try:
-      sign_in_anchor = self.__selenium_helper.get_element_by_exact_text("Sign in", ElementType.ANCHOR)
-      sign_in_anchor.click()
-    except NoSuchElementException:
-      pass
+    while True:
+      try:
+        sign_in_anchor = self.__selenium_helper.get_element_by_exact_text("Sign in", ElementType.ANCHOR)
+        sign_in_anchor.click()
+        return
+      except NoSuchElementException:
+        pass
+      except StaleElementReferenceException:
+        pass
 
   def __wait_for_vague_email_address_label(self, timeout=9999) -> None:
     start_time = time.time()

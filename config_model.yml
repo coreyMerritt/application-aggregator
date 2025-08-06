@@ -7,6 +7,10 @@ quick_settings:
     application_criteria:
       not_in_ignore: true
       is_in_ideal: false
+    easy_apply_only:
+      glassdoor: true
+      indeed: true
+      linkedin: true
     pause_on_unknown_stepper: false
     pause_after_each_platform: false
     remove_tabs_after_each_platform: false
@@ -172,9 +176,7 @@ glassdoor:
   email: "" # ex) "john.smith@gmail.com" 
   password: ""  # ex) "J0hnP@ssword123"
 indeed:
-  apply_now_only: true
   email: "" # ex) "john.smith@gmail.com" 
 linkedin:
-  easy_apply_only: true
   email: "" # ex) "john.smith@gmail.com" 
   password: ""  # ex) "J0hnP@ssword123"

@@ -7,8 +7,15 @@ class ApplicationCriteria:
   is_in_ideal: bool = False
 
 @dataclass
+class EasyApplyOnly:
+  glassdoor: bool = True
+  indeed: bool = True
+  linkedin: bool = True
+
+@dataclass
 class BotBehavior:
   application_criteria: ApplicationCriteria = field(default_factory=ApplicationCriteria)
+  easy_apply_only: EasyApplyOnly = field(default_factory=EasyApplyOnly)
   pause_on_unknown_stepper: bool = False
   pause_after_each_platform: bool = False
   remove_tabs_after_each_platform: bool = True

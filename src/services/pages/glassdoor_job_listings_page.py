@@ -12,6 +12,9 @@ from selenium.common.exceptions import (
 from entities.glassdoor_brief_job_listing import GlassdoorBriefJobListing
 from entities.glassdoor_job_listing import GlassdoorJobListing
 from exceptions.no_more_job_listings_exception import NoMoreJobListingsException
+from exceptions.page_didnt_load_exception import PageDidntLoadException
+from exceptions.service_is_down_exception import ServiceIsDownException
+from exceptions.zero_search_results_exception import ZeroSearchResultsException
 from models.configs.quick_settings import QuickSettings
 from models.enums.element_type import ElementType
 from models.configs.universal_config import UniversalConfig
@@ -47,8 +50,10 @@ class GlassdoorJobListingsPage:
     self.__indeed_apply_now_page = indeed_apply_now_page
     self.__jobs_applied_to_this_session = []
 
-  def apply_to_all_matching_jobs(self) -> None:
-    if self.__returned_zero_results():
+  def handle_current_query(self) -> None:
+    try:
+      self.__confirm_page_stability()
+    except ZeroSearchResultsException:
       logging.debug("Returned 0 results, skipping query.")
       return
     while self.__page_didnt_load_is_present():
@@ -94,6 +99,21 @@ class GlassdoorJobListingsPage:
       self.__jobs_applied_to_this_session.append(brief_job_listing.to_minimal_dict())
       self.__add_job_listing_to_db(job_listing)
       self.__handle_potential_overload()
+
+  def __confirm_page_stability(self, timeout=60.0) -> None:
+    start_time = time.time()
+    count = 0
+    while time.time() - start_time < timeout:
+      try:
+        if self.__returned_zero_results():
+          raise ZeroSearchResultsException("Returned 0 results.")
+        return
+      except PageDidntLoadException as e:
+        count += 1
+        if count > 3:
+          raise ServiceIsDownException("Glassdoor appears to be down -- receiving constant page load problems.") from e
+        logging.warning("Page didnt load. Refreshing and trying again...")
+        self.__driver.refresh()
 
   def __build_job_listing(self, brief_job_listing: GlassdoorBriefJobListing) -> GlassdoorJobListing:
     while True:
@@ -311,7 +331,10 @@ class GlassdoorJobListingsPage:
     search_h1_class = "SearchResultsHeader_jobCount__eHngv"
     try:
       search_h1 = self.__driver.find_element(By.CLASS_NAME, search_h1_class)
-      if search_h1.text.lower().strip()[0] == "0":
+      search_h1_text = search_h1.text.lower().strip()
+      if len(search_h1_text) == 0:
+        raise PageDidntLoadException()
+      if search_h1_text[0] == "0":
         return True
       return False
     except NoSuchElementException:

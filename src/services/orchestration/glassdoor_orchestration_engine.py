@@ -2,6 +2,7 @@ import logging
 import time
 import undetected_chromedriver as uc
 from selenium.common.exceptions import TimeoutException
+from exceptions.service_is_down_exception import ServiceIsDownException
 from models.configs.glassdoor_config import GlassdoorConfig
 from models.configs.quick_settings import QuickSettings
 from models.configs.universal_config import UniversalConfig
@@ -57,11 +58,15 @@ class GlassdoorOrchestrationEngine:
         time.sleep(0.5)
     self.__glassdoor_login_page.login()
     search_terms = self.__universal_config.search.terms.match
-    for search_term in search_terms:
-      query_builder = GlassdoorQueryUrlBuilder(self.__universal_config)
-      query_url = query_builder.build(search_term)
-      self.__go_to_query_url(query_url)
-      self.__glassdoor_job_listings_page.apply_to_all_matching_jobs()
+    try:
+      for search_term in search_terms:
+        query_builder = GlassdoorQueryUrlBuilder(self.__universal_config)
+        query_url = query_builder.build(search_term)
+        self.__go_to_query_url(query_url)
+        self.__glassdoor_job_listings_page.handle_current_query()
+    except ServiceIsDownException:
+      logging.warning("Glassdoor service appears to be down. Skipping all Glassdoor queries...")
+      return
 
   def __wait_for_human_verification_page(self) -> None:
     while True:

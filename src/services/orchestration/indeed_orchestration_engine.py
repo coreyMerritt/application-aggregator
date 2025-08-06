@@ -58,7 +58,7 @@ class IndeedOrchestrationEngine:
     while not self.__indeed_job_listings_page.is_present():
       logging.debug("Waiting for Job Listings page to appear...")
       time.sleep(0.5)
-    self.__indeed_job_listings_page.apply_to_all_matching_jobs()
+    self.__indeed_job_listings_page.handle_current_query()
 
   def __go_to_query(self) -> None:
     query_url_builder = IndeedQueryUrlBuilder(self.__universal_config)

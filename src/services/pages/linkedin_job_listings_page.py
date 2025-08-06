@@ -62,7 +62,7 @@ class LinkedinJobListingsPage:
     self.__proxy_manager = proxy_manager
     self.__jobs_applied_to_this_session = []
 
-  def apply_to_all_matching_jobs(self) -> None:
+  def handle_current_query(self) -> None:
     total_jobs_tried = 0
     job_listing_li_index = 0
     while True:

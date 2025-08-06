@@ -57,7 +57,7 @@ class IndeedJobListingsPage:
     except NoSuchElementException:
       return False
 
-  def apply_to_all_matching_jobs(self) -> None:
+  def handle_current_query(self) -> None:
     PROPER_JOB_INDEXES = [2, 3, 4, 5, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]
     INVISIBLE_AD_INDEXES = [1, 19]
     VISIBLE_AD_INDEXES = [7]

@@ -35,7 +35,7 @@ class IndeedResumeStepper:
 
   def resolve(self) -> None:
     if not self.__resume_preview_is_visible():
-      self.__select_first_resume()
+      self.__select_first_resume_with_name()
     time.sleep(1)
     self.__click_continue_button()
     while self.is_present():
@@ -52,7 +52,7 @@ class IndeedResumeStepper:
   def __resume_preview_is_visible(self) -> bool:
     return self.__selenium_helper.exact_text_is_present("Resume options", ElementType.SPAN)
 
-  def __select_first_resume(self, timeout=5) -> None:
+  def __select_first_resume_with_name(self, timeout=5) -> None:
     start_time = time.time()
     while time.time() - start_time < timeout:
       try:

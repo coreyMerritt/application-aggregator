@@ -56,7 +56,7 @@ class LinkedinOrchestrationEngine:
       query_terms = [""]
     for search_term in query_terms:
       self.__go_to_query(search_term)
-      self.__linkedin_job_listings_page.apply_to_all_matching_jobs()
+      self.__linkedin_job_listings_page.handle_current_query()
 
   def __go_to_query(self, search_term: str) -> None:
     query_url_builder = LinkedinQueryUrlBuilder(self.__linkedin_config, self.__universal_config)

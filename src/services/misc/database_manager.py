@@ -1,8 +1,9 @@
 
 from datetime import datetime, timedelta, timezone
 import logging
+from typing import List, Tuple
 from urllib.parse import quote_plus
-from sqlalchemy import create_engine, desc
+from sqlalchemy import create_engine, desc, func
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import sessionmaker, Session
 from entities.abc_brief_job_listing import BriefJobListing
@@ -14,7 +15,6 @@ from models.db.brief_job_listing_orm import BriefJobListingORM
 from models.db.job_listing_orm import JobListingORM
 from models.db.rate_limit import RateLimitORM
 from models.enums.platform import Platform
-
 
 
 class DatabaseManager:
@@ -123,6 +123,46 @@ class DatabaseManager:
       session.add(job_listing_orm)
       session.commit()
     session.close()
+
+  def get_highest_brief_job_listing_ignore_keywords(self, limit=10) -> List[Tuple[str, str, int]]:
+    session = self.get_session()
+    top_ignore_terms_query = (
+      session.query(
+        BriefJobListingORM.ignore_category,
+        BriefJobListingORM.ignore_term,
+        func.count(BriefJobListingORM.id).label("count")    # pylint: disable=not-callable
+      )
+      .filter(BriefJobListingORM.ignore_category.isnot(None))
+      .filter(BriefJobListingORM.ignore_term.isnot(None))
+      .group_by(
+        BriefJobListingORM.ignore_category,
+        BriefJobListingORM.ignore_term
+      )
+      .order_by(func.count(BriefJobListingORM.id).desc())   # pylint: disable=not-callable
+      .limit(limit)
+    )
+    top_ignore_terms = top_ignore_terms_query.all()
+    return top_ignore_terms
+
+  def get_highest_job_listing_ignore_keywords(self, limit=10) -> List[Tuple[str, str, int]]:
+    session = self.get_session()
+    top_ignore_terms_query = (
+      session.query(
+        JobListingORM.ignore_category,
+        JobListingORM.ignore_term,
+        func.count(JobListingORM.id).label("count")    # pylint: disable=not-callable
+      )
+      .filter(JobListingORM.ignore_category.isnot(None))
+      .filter(JobListingORM.ignore_term.isnot(None))
+      .group_by(
+        JobListingORM.ignore_category,
+        JobListingORM.ignore_term
+      )
+      .order_by(func.count(JobListingORM.id).desc())   # pylint: disable=not-callable
+      .limit(limit)
+    )
+    top_ignore_terms = top_ignore_terms_query.all()
+    return top_ignore_terms
 
   def log_rate_limit_block(self, ip_address: str, platform: Platform) -> None:
     logging.warning("Rate limited by %s on address: %s", platform.value, ip_address)

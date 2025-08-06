@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import argparse
 import logging
 import time
 import traceback
@@ -39,6 +40,18 @@ class Start:
     self.__driver = self.__selenium_helper.get_driver()
 
   def execute(self):
+    parser = argparse.ArgumentParser()
+    subparsers = parser.add_subparsers(dest="command")
+    subparsers.required = True
+    apply_parser = subparsers.add_parser("apply", help="Aggregates jobs; fills out some data; scrapes job info.")
+    apply_parser.set_defaults(func=self.apply)
+    output_parser = subparsers.add_parser("output", help="Outputs scrapped job info.")
+    output_parser.add_argument("--ignore-terms", type=int, required=True)
+    output_parser.set_defaults(func=self.__output)
+    args = parser.parse_args()
+    args.func(args)
+
+  def apply(self, args: argparse.Namespace):    # pylint: disable=unused-argument
     try:
       for some_platform in self.__config.quick_settings.bot_behavior.platform_order:
         platform = str(some_platform).lower()
@@ -128,11 +141,29 @@ class Start:
     if self.__config.quick_settings.bot_behavior.remove_tabs_after_each_platform:
       self.__remove_all_tabs_except_first()
 
-  def __remove_all_tabs_except_first(self):
+  def __remove_all_tabs_except_first(self) -> None:
     while len(self.__driver.window_handles) > 1:
       self.__driver.switch_to.window(self.__driver.window_handles[-1])
       self.__driver.close()
     self.__driver.switch_to.window(self.__driver.window_handles[0])
 
+  def __output(self, args: argparse.Namespace) -> None:
+    if args.ignore_terms:
+      self.__print_highest_ignore_terms(args.ignore_terms)
+
+  def __print_highest_ignore_terms(self, limit: int) -> None:
+    print("\n" + "Brief Job Listing Ignore Terms".center(50))
+    keywords = self.__database_manager.get_highest_brief_job_listing_ignore_keywords(limit)
+    print(f"{"Category":>11}   {"Term":<20} {"Count"}")
+    print("─" * 50)
+    for category, term, count in keywords:
+      print(f"{category:>11}   {term:<20} {count:07,d}")
+    print("\n" + "Job Listing Ignore Terms".center(50))
+    keywords = self.__database_manager.get_highest_job_listing_ignore_keywords(limit)
+    print(f"{"Category":>11}   {"Term":<20} {"Count"}")
+    print("─" * 50)
+    for category, term, count in keywords:
+      print(f"{category:>11}   {term:<20} {count:07,d}")
+    print()
 
 Start().execute()

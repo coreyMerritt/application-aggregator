@@ -17,3 +17,8 @@ class GlassdoorBriefJobListing(BriefJobListing):
     self.set_location(location_div.text.strip())
     self.set_min_pay(None)
     self.set_max_pay(None)
+    job_anchor_class = "JobCard_trackingLink__HMyun"
+    job_anchor = job_listing_li.find_element(By.CLASS_NAME, job_anchor_class)
+    url = job_anchor.get_attribute("href")
+    assert url
+    self.set_url(url)

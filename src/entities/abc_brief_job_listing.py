@@ -14,6 +14,7 @@ class BriefJobListing(ABC):
   __max_pay: float | None = None
   __ignore_category: str | None = None
   __ignore_term: str | None = None
+  __url: str
 
   def get_title(self) -> str:
     return self.__title
@@ -36,6 +37,9 @@ class BriefJobListing(ABC):
   def get_ignore_term(self) -> str | None:
     return self.__ignore_term
 
+  def get_url(self) -> str:
+    return self.__url
+
   def set_title(self, title: str) -> None:
     self.__title = title
 
@@ -57,11 +61,14 @@ class BriefJobListing(ABC):
   def set_ignore_term(self, term: str | None) -> None:
     self.__ignore_term = term
 
+  def set_url(self, url: str) -> None:
+    self.__url = url
+
   def passes_filter_check(self, universal_config: UniversalConfig, quick_settings: QuickSettings) -> bool:
     if quick_settings.bot_behavior.application_criteria.is_in_ideal:
       if quick_settings.bot_behavior.application_criteria.not_in_ignore:
         if not self._is_ideal_listing(universal_config):
-          logging.info("Ignoring Brief Job Listing because it is not a gold star.\n")
+          logging.info("Ignoring Brief Job Listing because it is not \"ideal\".\n")
           return False
         else:
           if self._passes_ignore_filters(universal_config):
@@ -72,18 +79,18 @@ class BriefJobListing(ABC):
             return False
       else:
         if self._is_ideal_listing(universal_config):
-          logging.info("Brief Job Listing passes because its a gold star.")
+          logging.info("Brief Job Listing passes because its \"ideal\".")
           return True
         else:
-          logging.info("Ignoring Brief Job Listing because it is not a gold star.\n")
+          logging.info("Ignoring Brief Job Listing because it is not \"ideal\".\n")
           return False
     else:
       if quick_settings.bot_behavior.application_criteria.not_in_ignore:
         if self._passes_ignore_filters(universal_config):
-          logging.info("Brief Job Listing passes because it matches no terms in ignore.")
+          logging.info("Brief Job Listing passes because it matches no terms in \"ignore\".")
           return True
         else:
-          logging.info("Ignoring Brief Job Listing because ignore term was found.\n")
+          logging.info("Ignoring Brief Job Listing because \"ignore\" term was found.\n")
           return False
       else:
         return True

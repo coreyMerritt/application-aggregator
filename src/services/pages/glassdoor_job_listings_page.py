@@ -65,6 +65,7 @@ class GlassdoorJobListingsPage:
       i += 1
       logging.debug("Looping through Job Listings: %s...", i)
       self.__remove_create_job_dialog()
+      self.__remove_survey_popup()
       try:
         job_listing_li = self.__get_job_listing_li(i)
       except NoMoreJobListingsException:
@@ -83,6 +84,7 @@ class GlassdoorJobListingsPage:
         continue
       self.__add_brief_job_listing_to_db(brief_job_listing)
       self.__remove_create_job_dialog()
+      self.__remove_survey_popup()
       job_listing_li.click()
       job_listing = self.__build_job_listing(brief_job_listing)
       if not job_listing.passes_filter_check(self.__universal_config, self.__quick_settings):
@@ -97,14 +99,14 @@ class GlassdoorJobListingsPage:
     while True:
       try:
         job_info_div = self.__get_job_info_div()
-        job_listing = GlassdoorJobListing(brief_job_listing, job_info_div)
+        job_listing = GlassdoorJobListing(brief_job_listing, job_info_div, self.__driver.current_url)
         return job_listing
       except StaleElementReferenceException:
         if not self.__job_info_div_is_present():
           if self.__page_didnt_load_is_present():
             self.__reload_job_description()
         job_info_div = self.__get_job_info_div()
-        job_listing = GlassdoorJobListing(brief_job_listing, job_info_div)
+        job_listing = GlassdoorJobListing(brief_job_listing, job_info_div, self.__driver.current_url)
         return job_listing
       except TimeoutError:
         self.__driver.refresh()
@@ -132,9 +134,11 @@ class GlassdoorJobListingsPage:
       job_listings_ul = self.__selenium_helper.get_element_by_aria_label("Jobs List", ElementType.UL)
     except ElementClickInterceptedException:
       self.__remove_create_job_dialog()
+      self.__remove_survey_popup()
       job_listings_ul = self.__selenium_helper.get_element_by_aria_label("Jobs List", ElementType.UL)
     except NoSuchElementException:
       self.__remove_create_job_dialog()
+      self.__remove_survey_popup()
       job_listings_ul = self.__selenium_helper.get_element_by_aria_label("Jobs List", ElementType.UL)
     return job_listings_ul
 
@@ -178,6 +182,7 @@ class GlassdoorJobListingsPage:
         show_more_jobs_button.click()
       except ElementClickInterceptedException:
         self.__remove_create_job_dialog()
+        self.__remove_survey_popup()
         time.sleep(0.1)
       except StaleElementReferenceException:
         time.sleep(0.1)
@@ -198,6 +203,7 @@ class GlassdoorJobListingsPage:
     logging.debug("Applying to selected job...")
     starting_window_count = len(self.__driver.window_handles)
     self.__remove_create_job_dialog()
+    self.__remove_survey_popup()
     apply_button = self.__get_apply_button()
     if not apply_button:
       return    # Assumes this is a greyed out "Applied" job
@@ -271,6 +277,14 @@ class GlassdoorJobListingsPage:
     except NoSuchElementException:
       pass
 
+  def __remove_survey_popup(self) -> None:
+    exit_button_id = "qual_close_open"
+    try:
+      exit_button = self.__driver.find_element(By.ID, exit_button_id)
+      exit_button.click()
+    except NoSuchElementException:
+      pass
+
   def __handle_potential_human_verification_wait(self) -> None:
     while self.__selenium_helper.exact_text_is_present(
       "Additional Verification Required",
@@ -324,6 +338,5 @@ class GlassdoorJobListingsPage:
     self.__database_manager.create_new_job_listing(
       self.__universal_config,
       job_listing,
-      self.__driver.current_url,
       Platform.GLASSDOOR
     )

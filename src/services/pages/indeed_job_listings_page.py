@@ -156,7 +156,7 @@ class IndeedJobListingsPage:
 
   def __build_job_listing(self, brief_job_listing: IndeedBriefJobListing) -> IndeedJobListing:
     job_description_html = self.__get_job_description_html()
-    job_listing = IndeedJobListing(brief_job_listing, job_description_html)
+    job_listing = IndeedJobListing(brief_job_listing, job_description_html, self.__driver.current_url)
     return job_listing
 
   def __apply_to_job(self, brief_job_listing: IndeedBriefJobListing) -> None:
@@ -344,6 +344,5 @@ class IndeedJobListingsPage:
     self.__database_manager.create_new_job_listing(
       self.__universal_config,
       job_listing,
-      self.__driver.current_url,
       Platform.INDEED
     )

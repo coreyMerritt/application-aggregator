@@ -14,6 +14,7 @@ class BriefJobListingORM(Base):
   min_pay = Column(Float, nullable=True)
   max_pay = Column(Float, nullable=True)
   platform = Column(String)
+  url = Column(String)
   ignore_category = Column(String, nullable=True)
   ignore_term = Column(String, nullable=True)
   timestamp = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))

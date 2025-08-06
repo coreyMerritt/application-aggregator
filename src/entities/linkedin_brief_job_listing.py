@@ -24,6 +24,10 @@ class LinkedinBriefJobListing(BriefJobListing):
     except NoSuchElementException:
       self.set_min_pay(None)
       self.set_max_pay(None)
+    job_listing_anchor = job_listing_li.find_element(By.XPATH, "./div/a")
+    url = job_listing_anchor.get_attribute("href")
+    assert url
+    self.set_url(url)
 
   def __handle_linkedin_pay(self, raw_pay_string: str) -> None:
     raw_pay_string = raw_pay_string.lower().strip()

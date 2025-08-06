@@ -17,3 +17,8 @@ class IndeedBriefJobListing(BriefJobListing):
     self.set_location(relative_location_div.text.strip())
     self.set_min_pay(None)
     self.set_max_pay(None)
+    relative_title_anchor_xpath = "./div/div/div/div/div/div/table/tbody/tr/td/div[1]/h2/a"
+    relative_title_anchor = job_listing_li.find_element(By.XPATH, relative_title_anchor_xpath)
+    url = relative_title_anchor.get_attribute("href")
+    assert url
+    self.set_url(url)

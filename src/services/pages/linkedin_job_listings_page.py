@@ -242,7 +242,7 @@ class LinkedinJobListingsPage:
     while time.time() - start_time < timeout:
       try:
         job_description_content_div = self.__get_job_description_content_div()
-        job_listing = LinkedinJobListing(brief_job_listing, job_description_content_div)
+        job_listing = LinkedinJobListing(brief_job_listing, job_description_content_div, self.__driver.current_url)
         return job_listing
       except StaleElementReferenceException:
         pass
@@ -474,6 +474,5 @@ class LinkedinJobListingsPage:
     self.__database_manager.create_new_job_listing(
       self.__universal_config,
       job_listing,
-      self.__driver.current_url,
       Platform.LINKEDIN
     )

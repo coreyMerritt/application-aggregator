@@ -51,6 +51,7 @@ class DatabaseManager:
       min_pay=brief_job_listing.get_min_pay(),
       max_pay=brief_job_listing.get_max_pay(),
       platform=platform.value,
+      url=brief_job_listing.get_url(),
       ignore_category=brief_job_listing.get_ignore_category(),
       ignore_term=brief_job_listing.get_ignore_term()
     )
@@ -67,7 +68,11 @@ class DatabaseManager:
       ignore_category=brief_job_listing_orm.ignore_category,
       ignore_term=brief_job_listing_orm.ignore_term
     ).first()
-    if not entry:
+    if entry:
+      if entry.url != brief_job_listing.get_url():
+        entry.url = brief_job_listing.get_url()
+        session.commit()
+    else:
       session.add(brief_job_listing_orm)
       session.commit()
     session.close()
@@ -76,7 +81,6 @@ class DatabaseManager:
     self,
     universal_config: UniversalConfig,
     job_listing: JobListing,
-    url: str,
     platform: Platform
   ) -> None:
     applied = job_listing.get_ignore_category() is None and job_listing.get_ignore_term() is None
@@ -89,7 +93,7 @@ class DatabaseManager:
       min_pay=job_listing.get_min_pay(),
       max_pay=job_listing.get_max_pay(),
       platform=platform.value,
-      url=url,
+      url=job_listing.get_url(),
       applied=applied,
       ignore_category=job_listing.get_ignore_category(),
       ignore_term=job_listing.get_ignore_term()
@@ -112,8 +116,8 @@ class DatabaseManager:
       ignore_term=job_listing_orm.ignore_term
     ).first()
     if entry:
-      if entry.url != url:
-        entry.url = url
+      if entry.url != job_listing.get_url():
+        entry.url = job_listing.get_url()
         session.commit()
     else:
       session.add(job_listing_orm)

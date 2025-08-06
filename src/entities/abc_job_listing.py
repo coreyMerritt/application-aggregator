@@ -31,7 +31,7 @@ class JobListing(BriefJobListing):
     if quick_settings.bot_behavior.application_criteria.is_in_ideal:
       if quick_settings.bot_behavior.application_criteria.not_in_ignore:
         if not self._is_ideal_listing(universal_config):
-          logging.info("Ignoring Brief Job Listing because it is not a gold star.\n")
+          logging.info("Ignoring Brief Job Listing because it is not \"ideal\".\n")
           return False
         else:
           if self._passes_ignore_filters(universal_config):
@@ -42,18 +42,18 @@ class JobListing(BriefJobListing):
             return False
       else:
         if self._is_ideal_listing(universal_config):
-          logging.info("Brief Job Listing passes because its a gold star.")
+          logging.info("Brief Job Listing passes because its \"ideal\".")
           return True
         else:
-          logging.info("Ignoring Brief Job Listing because it is not a gold star.\n")
+          logging.info("Ignoring Brief Job Listing because it is not \"ideal\".\n")
           return False
     else:
       if quick_settings.bot_behavior.application_criteria.not_in_ignore:
         if self._passes_ignore_filters(universal_config):
-          logging.info("Brief Job Listing passes because it matches no terms in ignore.")
+          logging.info("Brief Job Listing passes because it matches no terms in \"ignore\".")
           return True
         else:
-          logging.info("Ignoring Brief Job Listing because ignore term was found.\n")
+          logging.info("Ignoring Brief Job Listing because \"ignore\" term was found.\n")
           return False
       else:
         return True

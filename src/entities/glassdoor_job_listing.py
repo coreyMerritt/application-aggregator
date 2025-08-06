@@ -11,7 +11,7 @@ from services.misc.yoe_parser import YoeParser
 
 class GlassdoorJobListing(JobListing):
 
-  def __init__(self, brief_job_listing: GlassdoorBriefJobListing, job_info_div: WebElement):
+  def __init__(self, brief_job_listing: GlassdoorBriefJobListing, job_info_div: WebElement, url: str):
     self.set_title(brief_job_listing.get_title())
     self.set_company(brief_job_listing.get_company())
     self.set_location(brief_job_listing.get_location())
@@ -41,3 +41,4 @@ class GlassdoorJobListing(JobListing):
     min_yoe, max_yoe = yoe_parser.parse(description)
     self.set_min_yoe(min_yoe)
     self.set_max_yoe(max_yoe)
+    self.set_url(url)

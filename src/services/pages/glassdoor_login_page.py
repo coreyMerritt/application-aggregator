@@ -67,9 +67,14 @@ class GlassdoorLoginPage:
       except ElementClickInterceptedException:
         pass
     expected_landing_url = "https://www.glassdoor.com/Community/index.htm"
-    while not expected_landing_url in self.__driver.current_url:
-      logging.debug("Waiting for %s to be in url...", expected_landing_url)
-      time.sleep(0.5)
+    while True:
+      try:
+        while not expected_landing_url in self.__driver.current_url:
+          logging.debug("Waiting for %s to be in url...", expected_landing_url)
+          time.sleep(0.5)
+        break
+      except TimeoutException:
+        self.login()    # This is experimental, not sure this is safe yet
 
   def __wait_for_email_form(self, timeout=10) -> None:
     email_form_name = "emailForm"

@@ -4,8 +4,9 @@ quick_settings:
       - "linkedin"
       - "glassdoor"
       - "indeed"
-    gold_star_only: false
-    platinum_star_only: false
+    application_criteria:
+      not_in_ignore: true
+      is_in_ideal: false
     pause_on_unknown_stepper: false
     pause_after_each_platform: false
     remove_tabs_after_each_platform: false
@@ -141,7 +142,7 @@ universal:
       maximum: null   # ex) 5 -- will attempt to ignore all jobs that have an ask for over 5 years of experience
     # Jobs with these keywords will never be filtered out, regardless of the ignore section.
     # Use sparingly.
-    gold_star:
+    ideal:
       titles:
         # - "Some really good job"
         # - "Wow such title"

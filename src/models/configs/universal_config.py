@@ -83,7 +83,7 @@ class YearsOfExperience:
 class BotBehavior:
   ignore_jobs_that_demand_cover_letters: bool = False
   pause_every_x_jobs: int = 50
-  gold_star: JobMatchingList = field(default_factory=JobMatchingList)
+  ideal: JobMatchingList = field(default_factory=JobMatchingList)
   ignore: JobMatchingList = field(default_factory=JobMatchingList)
   years_of_experience: YearsOfExperience = field(default_factory=YearsOfExperience)
 

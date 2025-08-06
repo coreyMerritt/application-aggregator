@@ -28,52 +28,52 @@ class JobListing(BriefJobListing):
     self.__description = description
 
   def passes_filter_check(self, universal_config: UniversalConfig, quick_settings: QuickSettings) -> bool:
-    if quick_settings.bot_behavior.platinum_star_only:
-      if not self._is_gold_star_listing(universal_config):
-        logging.info("Ignoring Job Listing because it is not a gold star.\n")
-        return False
+    if quick_settings.bot_behavior.application_criteria.is_in_ideal:
+      if quick_settings.bot_behavior.application_criteria.not_in_ignore:
+        if not self._is_ideal_listing(universal_config):
+          logging.info("Ignoring Brief Job Listing because it is not a gold star.\n")
+          return False
+        else:
+          if self._passes_ignore_filters(universal_config):
+            logging.info("Brief Job Listing passes filter check.")
+            return True
+          else:
+            logging.info("Ignoring Brief Job Listing because ignore term was found.\n")
+            return False
       else:
-        if self._passes_ignore_filters(universal_config):
-          logging.info("Job Listing passes filter check.")
+        if self._is_ideal_listing(universal_config):
+          logging.info("Brief Job Listing passes because its a gold star.")
           return True
         else:
-          logging.info("Ignoring Job Listing because ignore term was found.\n")
+          logging.info("Ignoring Brief Job Listing because it is not a gold star.\n")
           return False
-    elif quick_settings.bot_behavior.gold_star_only:
-      if self._is_gold_star_listing(universal_config):
-        logging.info("Job Listing passes because its a gold star.")
-        return True
-      else:
-        logging.info("Ignoring Job Listing because it is not a gold star.\n")
-        return False
     else:
-      if self._is_gold_star_listing(universal_config):
-        logging.info("Job Listing passes because its a gold star.")
-        return True
-      else:
+      if quick_settings.bot_behavior.application_criteria.not_in_ignore:
         if self._passes_ignore_filters(universal_config):
-          logging.info("Job Listing passes because it matches no terms in ignore.")
+          logging.info("Brief Job Listing passes because it matches no terms in ignore.")
           return True
         else:
-          logging.info("Ignoring Job Listing because ignore term was found.\n")
+          logging.info("Ignoring Brief Job Listing because ignore term was found.\n")
           return False
+      else:
+        return True
 
-  def _is_gold_star_listing(self, universal_config: UniversalConfig) -> bool:
+  def _is_ideal_listing(self, universal_config: UniversalConfig) -> bool:
     title = self.get_title().lower().strip()
-    for gold_star_title in universal_config.bot_behavior.gold_star.titles:
-      if self._phrase_is_in_phrase(gold_star_title, title):
+    for ideal_title in universal_config.bot_behavior.ideal.titles:
+      if self._phrase_is_in_phrase(ideal_title, title):
         return True
     company = self.get_company().lower().strip()
-    for gold_star_company in universal_config.bot_behavior.gold_star.companies:
-      if self._phrase_is_in_phrase(gold_star_company, company):
+    for ideal_company in universal_config.bot_behavior.ideal.companies:
+      if self._phrase_is_in_phrase(ideal_company, company):
         return True
     location = self.get_location().lower().strip()
-    for gold_star_location in universal_config.bot_behavior.gold_star.locations:
-      if self._phrase_is_in_phrase(gold_star_location, location):
+    for ideal_location in universal_config.bot_behavior.ideal.locations:
+      if self._phrase_is_in_phrase(ideal_location, location):
         return True
     description = self.get_description().lower().strip()
-    for gold_star_description in universal_config.bot_behavior.gold_star.descriptions:
-      if self._phrase_is_in_phrase(gold_star_description, description):
+    for ideal_description in universal_config.bot_behavior.ideal.descriptions:
+      if self._phrase_is_in_phrase(ideal_description, description):
         return True
     return False
 

@@ -2,9 +2,13 @@ from dataclasses import dataclass, field
 
 
 @dataclass
+class ApplicationCriteria:
+  not_in_ignore: bool = True
+  is_in_ideal: bool = False
+
+@dataclass
 class BotBehavior:
-  gold_star_only: bool = False
-  platinum_star_only: bool = False
+  application_criteria: ApplicationCriteria = field(default_factory=ApplicationCriteria)
   pause_on_unknown_stepper: bool = False
   pause_after_each_platform: bool = False
   remove_tabs_after_each_platform: bool = True

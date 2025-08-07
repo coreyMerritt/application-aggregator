@@ -20,7 +20,7 @@ class BotBehavior:
   pause_after_each_platform: bool = False
   remove_tabs_after_each_platform: bool = True
   default_page_load_timeout: int = 30
-  pause_every_x_jobs: int = 50
+  pause_every_x_jobs: int | None = None
   platform_order: list = field(default_factory=list)
 
 @dataclass

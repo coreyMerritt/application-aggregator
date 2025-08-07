@@ -15,7 +15,7 @@ quick_settings:
     pause_after_each_platform: false
     remove_tabs_after_each_platform: false
     default_page_load_timeout: 30
-    pause_every_x_jobs: 50
+    pause_every_x_jobs: null    # int | null -- ex) 50
 system:
   browser:
     path: ""  # ex) "/usr/bin/google-chrome"

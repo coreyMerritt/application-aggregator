@@ -1,6 +1,7 @@
 import logging
 import time
 from typing import List
+import psutil
 import undetected_chromedriver as uc
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
@@ -67,7 +68,6 @@ class GlassdoorJobListingsPage:
       except NoSuchElementException:
         time.sleep(0.1)
     while True:
-      input("...")
       i += 1
       logging.debug("Looping through Job Listings: %s...", i)
       self.__remove_create_job_dialog()
@@ -344,11 +344,17 @@ class GlassdoorJobListingsPage:
   def __handle_potential_overload(self) -> None:
     jobs_open = len(self.__driver.window_handles) - 1
     pause_every_x_jobs = self.__quick_settings.bot_behavior.pause_every_x_jobs
+    current_memory_usage = psutil.virtual_memory().percent
+    logging.debug("Current memory usage: %s%s", current_memory_usage, "%")
     if (
-      jobs_open % pause_every_x_jobs == 0
+      pause_every_x_jobs
+      and jobs_open % pause_every_x_jobs == 0
       and jobs_open >= pause_every_x_jobs
     ):
-      print("\nPausing to allow user to handle existing tabs before overload.")
+      print(f"\nResponding to request to pause after every {pause_every_x_jobs} jobs.")
+      input("\tPress enter to proceed...")
+    elif current_memory_usage > 90:
+      print("\nCurrent memory usage is too high. Please clean up existing tabs to continue safely.")
       input("\tPress enter to proceed...")
 
   def __add_brief_job_listing_to_db(self, brief_job_listing: GlassdoorBriefJobListing) -> None:

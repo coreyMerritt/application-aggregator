@@ -108,17 +108,17 @@ class DatabaseManager:
     with self.get_session() as session:
       top_ignore_terms_query = (
         session.query(
-          JobListingORM.ignore_category,
-          JobListingORM.ignore_term,
-          func.count(JobListingORM.id).label("count")    # pylint: disable=not-callable
+          ApplicationORM.ignore_category,
+          ApplicationORM.ignore_term,
+          func.count(ApplicationORM.id).label("count")    # pylint: disable=not-callable
         )
-        .filter(JobListingORM.ignore_category.isnot(None))
-        .filter(JobListingORM.ignore_term.isnot(None))
+        .filter(ApplicationORM.ignore_category.isnot(None))
+        .filter(ApplicationORM.ignore_term.isnot(None))
         .group_by(
-          JobListingORM.ignore_category,
-          JobListingORM.ignore_term
+          ApplicationORM.ignore_category,
+          ApplicationORM.ignore_term
         )
-        .order_by(func.count(JobListingORM.id).desc())   # pylint: disable=not-callable
+        .order_by(func.count(ApplicationORM.id).desc())   # pylint: disable=not-callable
         .limit(limit)
       )
       top_ignore_terms = top_ignore_terms_query.all()

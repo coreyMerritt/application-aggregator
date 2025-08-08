@@ -79,9 +79,9 @@ class Start:
     subparsers.required = True
     apply_parser = subparsers.add_parser("apply", help="Aggregates jobs; fills out some data; scrapes job info.")
     apply_parser.set_defaults(func=self.apply)
-    output_parser = subparsers.add_parser("output", help="Outputs scrapped job info.")
-    output_parser.add_argument("--ignore-terms", type=int, required=True)
-    output_parser.set_defaults(func=self.__output)
+    get_parser = subparsers.add_parser("get", help="Gets scrapped job info.")
+    get_parser.add_argument("--ignore-terms", type=int, required=True)
+    get_parser.set_defaults(func=self.__get)
     args = parser.parse_args()
     args.func(args)
 
@@ -157,17 +157,17 @@ class Start:
       self.__driver.close()
     self.__driver.switch_to.window(self.__driver.window_handles[0])
 
-  def __output(self, args: argparse.Namespace) -> None:
+  def __get(self, args: argparse.Namespace) -> None:
     if args.ignore_terms:
       self.__print_highest_ignore_terms(args.ignore_terms)
 
   def __print_highest_ignore_terms(self, limit: int) -> None:
-    print("\n" + "Job Listing Ignore Terms".center(50))
+    print("\n" + "Job Listing Ignore Terms".center(100))
     keywords = self.__database_manager.get_highest_job_listing_ignore_keywords(limit)
-    print(f"{"Category":>11}   {"Term":<20} {"Count"}")
-    print("─" * 50)
+    print(f"{"Category":>22}   {"Term":<40} {"Count"}")
+    print("─" * 100)
     for category, term, count in keywords:
-      print(f"{category:>11}   {term:<20} {count:07,d}")
+      print(f"{category:>22}   {term:<40} {count:07,d}")
     print()
 
 Start().execute()

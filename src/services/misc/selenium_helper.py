@@ -141,29 +141,33 @@ class SeleniumHelper:
         continue
     raise NoSuchElementException(f"Failed to find {element_type.value} with text: {some_text}")
 
+  def exact_aria_label_is_present(
+    self,
+    some_aria_label: str,
+    base_element: WebElement | None = None
+  ) -> bool:
+    selector = f'[aria-label="{some_aria_label}"]'
+    try:
+      if base_element:
+        base_element.find_element(By.CSS_SELECTOR, selector)
+      else:
+        self.__driver.find_element(By.CSS_SELECTOR, selector)
+      return True
+    except NoSuchElementException:
+      return False
+
+
   def get_element_by_aria_label(
     self,
     some_aria_label: str,
-    element_type: ElementType,
     base_element: WebElement | None = None
   ) -> WebElement:
-    logging.debug("Getting %s with aria_label: %s", element_type.value, some_aria_label)
-    some_aria_label = some_aria_label.lower().strip()
+    selector = f'[aria-label="{some_aria_label}"]'
     if base_element:
-      elements = base_element.find_elements(By.TAG_NAME, element_type.value)
+      element = base_element.find_element(By.CSS_SELECTOR, selector)
     else:
-      elements = self.__driver.find_elements(By.TAG_NAME, element_type.value)
-    for el in elements:
-      try:
-        if el.is_displayed():
-          aria_label = el.get_attribute("aria-label")
-          if aria_label:
-            aria_label = aria_label.lower().strip()
-            if some_aria_label in aria_label:
-              return el
-      except StaleElementReferenceException:
-        continue
-    raise NoSuchElementException(f"Failed to find {element_type.value} with aria-label: {some_aria_label}")
+      element = self.__driver.find_element(By.CSS_SELECTOR, selector)
+    return element
 
   def write_to_input(self, some_text: str, input_el: WebElement, sensitive=False) -> None:
     if sensitive:

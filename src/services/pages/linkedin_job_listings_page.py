@@ -302,7 +302,6 @@ class LinkedinJobListingsPage:
     try:
       linkedin_footer = self.__selenium_helper.get_element_by_aria_label(
         "LinkedIn Footer Content",
-        ElementType.FOOTER,
         self.__get_main_content_div()
       )
       linkedin_footer.find_element(By.XPATH, "..")
@@ -319,7 +318,6 @@ class LinkedinJobListingsPage:
       try:
         linkedin_footer = self.__selenium_helper.get_element_by_aria_label(
           "LinkedIn Footer Content",
-          ElementType.FOOTER,
           self.__get_main_content_div()
         )
         job_listings_ul = linkedin_footer.find_element(By.XPATH, "..")
@@ -341,7 +339,6 @@ class LinkedinJobListingsPage:
     main_content_div = self.__get_main_content_div()
     return self.__selenium_helper.get_element_by_aria_label(
       "View next page",
-      ElementType.BUTTON,
       base_element=main_content_div
     )
 

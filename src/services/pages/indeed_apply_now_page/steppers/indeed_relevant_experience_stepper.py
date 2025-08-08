@@ -2,9 +2,8 @@ import logging
 import time
 import undetected_chromedriver as uc
 from selenium.webdriver.common.by import By
-from selenium.common.exceptions import ElementClickInterceptedException, NoSuchElementException
+from selenium.common.exceptions import NoSuchElementException
 from models.configs.universal_config import UniversalConfig
-from models.enums.element_type import ElementType
 from services.misc.selenium_helper import SeleniumHelper
 
 
@@ -30,11 +29,6 @@ class IndeedRelevantExperienceStepper:
   def resolve(self) -> None:
     self.__handle_company_name_input()
     self.__handle_job_title_input()
-    while self.is_present():
-      # This pages really likes to act up, so self.__click_continue_button() needs to be in this loop sadly
-      self.__click_continue_button()
-      logging.debug("Waiting for relevant experience page to resolve...")
-      time.sleep(5)
 
   def __handle_company_name_input(self, timeout=1) -> None:
     if len(self.__universal_config.about_me.work_experience) > 0:
@@ -65,23 +59,3 @@ class IndeedRelevantExperienceStepper:
     except NoSuchElementException:
       pass
     raise NoSuchElementException("Failed to find job title input.")
-
-  def __click_continue_button(self, timeout=10) -> None:
-    start_time = time.time()
-    # I really don't like using this loop for this but the continue button element is very shoddy
-    while time.time() - start_time < timeout:
-      try:
-        continue_span = self.__selenium_helper.get_element_by_exact_text(
-          "Continue",
-          ElementType.SPAN
-        )
-        continue_button = continue_span.find_element(By.XPATH, "..")
-        continue_button.click()
-        break
-      except NoSuchElementException:
-        logging.debug("Failed to click continue button. Trying again...")
-        time.sleep(0.5)
-      except ElementClickInterceptedException:
-        logging.debug("Failed to click continue button. Clicking body then trying again...")
-        self.__driver.find_element(By.TAG_NAME, "body").click()
-        time.sleep(0.5)

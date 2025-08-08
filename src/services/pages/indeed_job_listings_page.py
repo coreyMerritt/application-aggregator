@@ -159,6 +159,11 @@ class IndeedJobListingsPage:
       ):
         return
       elif self.__selenium_helper.exact_text_is_present(
+        "Job details",
+        ElementType.H2
+      ):
+        return
+      elif self.__selenium_helper.exact_text_is_present(
         "We can’t find this page",
         ElementType.H1
       ):
@@ -212,7 +217,10 @@ class IndeedJobListingsPage:
   def __go_to_next_page(self) -> None:
     logging.info("Going to page %s...", self.__current_page_number + 1)
     next_page_anchor = self.__get_next_page_anchor()
-    next_page_anchor.click()
+    try:
+      next_page_anchor.click()
+    except TimeoutException:
+      logging.warning("Received a TimeoutException that has historically shown to not be an issue. Continuing...")
     self.__current_page_number += 1
 
   def __get_job_listing_li(self, index: int) -> Optional[WebElement]:

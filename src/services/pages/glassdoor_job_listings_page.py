@@ -158,15 +158,15 @@ class GlassdoorJobListingsPage:
 
   def __get_job_listings_ul(self) -> WebElement:
     try:
-      job_listings_ul = self.__selenium_helper.get_element_by_aria_label("Jobs List", ElementType.UL)
+      job_listings_ul = self.__selenium_helper.get_element_by_aria_label("Jobs List")
     except ElementClickInterceptedException:
       self.__remove_create_job_dialog()
       self.__remove_survey_popup()
-      job_listings_ul = self.__selenium_helper.get_element_by_aria_label("Jobs List", ElementType.UL)
+      job_listings_ul = self.__selenium_helper.get_element_by_aria_label("Jobs List")
     except NoSuchElementException:
       self.__remove_create_job_dialog()
       self.__remove_survey_popup()
-      job_listings_ul = self.__selenium_helper.get_element_by_aria_label("Jobs List", ElementType.UL)
+      job_listings_ul = self.__selenium_helper.get_element_by_aria_label("Jobs List")
     return job_listings_ul
 
   def __get_job_listing_li(self, index: int) -> WebElement:

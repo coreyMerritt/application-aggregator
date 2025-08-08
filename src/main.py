@@ -166,8 +166,11 @@ class Start:
     keywords = self.__database_manager.get_highest_job_listing_ignore_keywords(limit)
     print(f"{"Category":>22}   {"Term":<40} {"Count"}")
     print("─" * 100)
+    # Some formatting to ensure all values are in the same format that supports the max count, ex) 1,302 -- 0,021
+    max_count = max(x[2] for x in keywords)
+    width = len(f"{max_count:,}")
     for category, term, count in keywords:
-      print(f"{category:>22}   {term:<40} {count:07,d}")
+      print(f"{category:>22}   {term:<40} {count:{width},}")
     print()
 
 Start().execute()

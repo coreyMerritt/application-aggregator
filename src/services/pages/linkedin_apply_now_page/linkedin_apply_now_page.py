@@ -2,6 +2,7 @@ import logging
 import time
 import undetected_chromedriver as uc
 from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.common.exceptions import (
   ElementClickInterceptedException,
@@ -119,8 +120,6 @@ class LinkedinApplyNowPage:
           if self.__some_field_was_left_blank():
             if self.__quick_settings.bot_behavior.pause_on_unknown_stepper:
               input("Unknown stepper found. Press enter to continue...")
-          return
-
     except StaleElementReferenceException:
       logging.debug("StaleElementReferenceException. Querying for new easy_apply_div...")
       self.__reset_contexts()
@@ -170,6 +169,8 @@ class LinkedinApplyNowPage:
   def __continue_stepper(self) -> None:
     element_to_search = self.__easy_apply_div
     while True:
+      self.__driver.find_element(By.TAG_NAME, "body").click()
+      time.sleep(0.1)
       try:
         next_span = self.__selenium_helper.get_element_by_exact_text("Next", ElementType.SPAN, element_to_search)
         next_button = next_span.find_element(By.XPATH, "..")

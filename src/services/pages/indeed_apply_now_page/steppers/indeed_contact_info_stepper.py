@@ -35,10 +35,6 @@ class IndeedContactInfoStepper:
       pass
     self.__handle_last_name_input()
     self.__handle_first_name_input()
-    self.__click_continue_button()
-    while self.is_present():
-      logging.debug("Waiting for contact info page to resolve...")
-      time.sleep(0.5)
 
   def __handle_phone_number_input(self) -> None:
     phone_number = self.__universal_config.about_me.contact.phone_number
@@ -101,23 +97,3 @@ class IndeedContactInfoStepper:
       except NoSuchElementException:
         pass
     raise NoSuchElementException("Failed to find city-state input.")
-
-  def __click_continue_button(self, timeout=10) -> None:
-    start_time = time.time()
-    # I really don't like using this loop for this but the continue button element is very shoddy
-    while time.time() - start_time < timeout:
-      try:
-        continue_span = self.__selenium_helper.get_element_by_exact_text(
-          "Continue",
-          ElementType.SPAN
-        )
-        continue_button = continue_span.find_element(By.XPATH, "..")
-        continue_button.click()
-        break
-      except NoSuchElementException:
-        logging.debug("Failed to click continue button. Trying again...")
-        time.sleep(0.5)
-      except ElementClickInterceptedException:
-        logging.debug("Failed to click continue button. Clicking body then trying again...")
-        self.__driver.find_element(By.TAG_NAME, "body").click()
-        time.sleep(0.5)

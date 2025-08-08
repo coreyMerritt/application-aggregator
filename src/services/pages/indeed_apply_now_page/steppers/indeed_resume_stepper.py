@@ -1,8 +1,7 @@
 import logging
 import time
 import undetected_chromedriver as uc
-from selenium.webdriver.common.by import By
-from selenium.common.exceptions import ElementClickInterceptedException, NoSuchElementException
+from selenium.common.exceptions import NoSuchElementException
 from models.configs.universal_config import UniversalConfig
 from models.enums.element_type import ElementType
 from services.misc.selenium_helper import SeleniumHelper
@@ -36,18 +35,6 @@ class IndeedResumeStepper:
   def resolve(self) -> None:
     if not self.__resume_preview_is_visible():
       self.__select_first_resume_with_name()
-    time.sleep(1)
-    self.__click_continue_button()
-    while self.is_present():
-      if self.__is_please_try_again_error():
-        try:
-          self.__handle_please_try_again_error()
-        except RuntimeError:
-          self.__driver.close()
-          self.__driver.switch_to.window(self.__driver.window_handles[0])
-          return
-      logging.debug("Waiting for resume page to resolve...")
-      time.sleep(0.5)
 
   def __resume_preview_is_visible(self) -> bool:
     return self.__selenium_helper.exact_text_is_present("Resume options", ElementType.SPAN)
@@ -55,6 +42,8 @@ class IndeedResumeStepper:
   def __select_first_resume_with_name(self, timeout=5) -> None:
     start_time = time.time()
     while time.time() - start_time < timeout:
+      if not self.is_present():
+        return
       try:
         first = self.__universal_config.about_me.name.first
         last = self.__universal_config.about_me.name.last
@@ -69,36 +58,3 @@ class IndeedResumeStepper:
         logging.debug("Failed to click resume span. Trying again...")
         time.sleep(0.5)
     raise NoSuchElementException("Failed to click resume span.")
-
-  def __click_continue_button(self, timeout=10) -> None:
-    start_time = time.time()
-    # I really don't like using this loop for this but the continue button element is very shoddy
-    while time.time() - start_time < timeout:
-      try:
-        continue_span = self.__selenium_helper.get_element_by_exact_text(
-          "Continue",
-          ElementType.SPAN
-        )
-        continue_button = continue_span.find_element(By.XPATH, "..")
-        continue_button.click()
-        break
-      except NoSuchElementException:
-        logging.debug("Failed to click continue button. Trying again...")
-        time.sleep(0.5)
-      except ElementClickInterceptedException:
-        logging.debug("Failed to click continue button. Clicking body then trying again...")
-        self.__driver.find_element(By.TAG_NAME, "body").click()
-        time.sleep(0.5)
-
-  def __is_please_try_again_error(self) -> bool:
-    return self.__selenium_helper.exact_text_is_present(
-      "There was an error, please try again.",
-      ElementType.DIV
-    )
-
-  def __handle_please_try_again_error(self) -> None:
-    if self.__is_please_try_again_error():
-      self.__click_continue_button()
-      time.sleep(5)
-      if self.__is_please_try_again_error():
-        raise RuntimeError("Something went wrong on Indeed's end.")

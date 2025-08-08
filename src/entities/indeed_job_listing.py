@@ -2,17 +2,19 @@ from bs4 import BeautifulSoup
 from entities.abc_job_listing import JobListing
 from entities.indeed_brief_job_listing import IndeedBriefJobListing
 from services.misc.yoe_parser import YoeParser
+from services.misc.language_parser import LanguageParser
 
 
 class IndeedJobListing(JobListing):
 
   def __init__(
     self,
+    language_parser: LanguageParser,
     brief_job_listing: IndeedBriefJobListing,
     job_description_html: str | None = None,
     url: str | None = None
   ):
-    super().__init__()
+    super().__init__(language_parser)
     self.set_title(brief_job_listing.get_title())
     self.set_company(brief_job_listing.get_company())
     self.set_location(brief_job_listing.get_location())

@@ -1,12 +1,13 @@
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
 from entities.abc_brief_job_listing import BriefJobListing
+from services.misc.language_parser import LanguageParser
 
 
 class IndeedBriefJobListing(BriefJobListing):
 
-  def __init__(self, job_listing_li: WebElement):
-    super().__init__()
+  def __init__(self, language_parser: LanguageParser, job_listing_li: WebElement):
+    super().__init__(language_parser)
     relative_title_span_xpath = "./div/div/div/div/div/div/table/tbody/tr/td/div[1]/h2/a/span"
     relative_title_span = job_listing_li.find_element(By.XPATH, relative_title_span_xpath)
     self.set_title(relative_title_span.text.strip())

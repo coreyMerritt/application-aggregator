@@ -19,8 +19,8 @@ class BriefJobListing(ABC):
   __url: str
   __language_parser: LanguageParser
 
-  def __init__(self):
-    self.__language_parser = LanguageParser()
+  def __init__(self, language_parser: LanguageParser):
+    self.__language_parser = language_parser
 
   def get_title(self) -> str:
     return self.__title
@@ -52,6 +52,9 @@ class BriefJobListing(ABC):
     content_blob += f"{self.get_company()} "
     content_blob += self.get_location()
     return self.__language_parser.get_language(content_blob)
+
+  def _get_language_parser(self) -> LanguageParser:
+    return self.__language_parser
 
   def set_title(self, title: str) -> None:
     self.__title = title

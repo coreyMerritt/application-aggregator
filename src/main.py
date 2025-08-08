@@ -16,6 +16,7 @@ from services.orchestration.glassdoor_orchestration_engine import GlassdoorOrche
 from services.orchestration.indeed_orchestration_engine import IndeedOrchestrationEngine
 from services.orchestration.linkedin_orchestration_engine import LinkedinOrchestrationEngine
 from services.pages.indeed_apply_now_page.indeed_apply_now_page import IndeedApplyNowPage
+from services.misc.language_parser import LanguageParser
 
 
 class Start:
@@ -27,6 +28,7 @@ class Start:
   __indeed_orchestration_engine: IndeedOrchestrationEngine
   __glassdoor_orchestration_engine: GlassdoorOrchestrationEngine
   __linkedin_orchestration_engine: LinkedinOrchestrationEngine
+  __language_parser: LanguageParser
 
   def __init__(self):
     self.__configure_logger()
@@ -41,10 +43,12 @@ class Start:
       self.__proxy_manager
     )
     self.__driver = self.__selenium_helper.get_driver()
+    self.__language_parser = LanguageParser()
     self.__indeed_orchestration_engine = IndeedOrchestrationEngine(
       self.__driver,
       self.__selenium_helper,
       self.__database_manager,
+      self.__language_parser,
       self.__config.universal,
       self.__config.quick_settings,
       self.__config.indeed
@@ -53,6 +57,7 @@ class Start:
       self.__driver,
       self.__selenium_helper,
       self.__database_manager,
+      self.__language_parser,
       self.__config.universal,
       self.__config.quick_settings,
       self.__config.glassdoor,
@@ -67,6 +72,7 @@ class Start:
       self.__driver,
       self.__selenium_helper,
       self.__database_manager,
+      self.__language_parser,
       self.__config.universal,
       self.__config.quick_settings,
       self.__config.linkedin,

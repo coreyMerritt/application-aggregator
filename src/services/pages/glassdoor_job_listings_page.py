@@ -24,12 +24,14 @@ from models.enums.platform import Platform
 from services.misc.database_manager import DatabaseManager
 from services.pages.indeed_apply_now_page.indeed_apply_now_page import IndeedApplyNowPage
 from services.misc.selenium_helper import SeleniumHelper
+from services.misc.language_parser import LanguageParser
 
 
 class GlassdoorJobListingsPage:
   __driver: uc.Chrome
   __selenium_helper: SeleniumHelper
   __database_manager: DatabaseManager
+  __language_parser: LanguageParser
   __universal_config: UniversalConfig
   __quick_settings: QuickSettings
   __indeed_apply_now_page: IndeedApplyNowPage
@@ -40,6 +42,7 @@ class GlassdoorJobListingsPage:
     driver: uc.Chrome,
     selenium_helper: SeleniumHelper,
     database_manager: DatabaseManager,
+    language_parser: LanguageParser,
     universal_config: UniversalConfig,
     quick_settings: QuickSettings,
     indeed_apply_now_page: IndeedApplyNowPage
@@ -47,6 +50,7 @@ class GlassdoorJobListingsPage:
     self.__driver = driver
     self.__selenium_helper = selenium_helper
     self.__database_manager = database_manager
+    self.__language_parser = language_parser
     self.__universal_config = universal_config
     self.__quick_settings = quick_settings
     self.__indeed_apply_now_page = indeed_apply_now_page
@@ -81,8 +85,8 @@ class GlassdoorJobListingsPage:
       self.__selenium_helper.scroll_into_view(job_listing_li)
       if not self.__is_job_listing(job_listing_li):
         continue
-      brief_job_listing = GlassdoorBriefJobListing(job_listing_li)
-      temp_job_listing = GlassdoorJobListing(brief_job_listing)
+      brief_job_listing = GlassdoorBriefJobListing(self.__language_parser, job_listing_li)
+      temp_job_listing = GlassdoorJobListing(self.__language_parser, brief_job_listing)
       self.__add_job_listing_to_db(temp_job_listing)
       brief_job_listing.print()
       if brief_job_listing.to_minimal_dict() in self.__jobs_applied_to_this_session:
@@ -129,14 +133,14 @@ class GlassdoorJobListingsPage:
     while True:
       try:
         job_info_div = self.__get_job_info_div()
-        job_listing = GlassdoorJobListing(brief_job_listing, job_info_div, self.__driver.current_url)
+        job_listing = GlassdoorJobListing(self.__language_parser, brief_job_listing, job_info_div, self.__driver.current_url)
         return job_listing
       except StaleElementReferenceException:
         if not self.__job_info_div_is_present():
           if self.__page_didnt_load_is_present():
             self.__reload_job_description()
         job_info_div = self.__get_job_info_div()
-        job_listing = GlassdoorJobListing(brief_job_listing, job_info_div, self.__driver.current_url)
+        job_listing = GlassdoorJobListing(self.__language_parser, brief_job_listing, job_info_div, self.__driver.current_url)
         return job_listing
       except TimeoutError:
         self.__driver.refresh()

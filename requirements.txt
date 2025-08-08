@@ -1,6 +1,6 @@
 beautifulsoup4==4.13.4
 dacite==1.9.2
-langdetect==1.0.9
+langid==1.1.6
 psycopg2-binary==2.9.10
 psutil==7.0.0
 pyyaml==6.0.2

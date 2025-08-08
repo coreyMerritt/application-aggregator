@@ -10,6 +10,7 @@ from services.misc.selenium_helper import SeleniumHelper
 from services.pages.linkedin_login_page import LinkedinLoginPage
 from services.pages.linkedin_job_listings_page import LinkedinJobListingsPage
 from services.query_url_builders.linkedin_query_url_builder import LinkedinQueryUrlBuilder
+from services.misc.language_parser import LanguageParser
 
 
 class LinkedinOrchestrationEngine:
@@ -24,6 +25,7 @@ class LinkedinOrchestrationEngine:
     driver: uc.Chrome,
     selenium_helper: SeleniumHelper,
     database_manager: DatabaseManager,
+    language_parser: LanguageParser,
     universal_config: UniversalConfig,
     quick_settings: QuickSettings,
     linkedin_config: LinkedinConfig,
@@ -41,6 +43,7 @@ class LinkedinOrchestrationEngine:
       driver,
       selenium_helper,
       database_manager,
+      language_parser,
       universal_config,
       quick_settings,
       linkedin_config,

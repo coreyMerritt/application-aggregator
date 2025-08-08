@@ -7,17 +7,19 @@ from selenium.common.exceptions import NoSuchElementException
 from entities.abc_job_listing import JobListing
 from entities.glassdoor_brief_job_listing import GlassdoorBriefJobListing
 from services.misc.yoe_parser import YoeParser
+from services.misc.language_parser import LanguageParser
 
 
 class GlassdoorJobListing(JobListing):
 
   def __init__(
     self,
+    language_parser: LanguageParser,
     brief_job_listing: GlassdoorBriefJobListing,
     job_info_div: WebElement | None = None,
     url: str | None = None
   ):
-    super().__init__()
+    super().__init__(language_parser)
     self.set_title(brief_job_listing.get_title())
     self.set_company(brief_job_listing.get_company())
     self.set_location(brief_job_listing.get_location())

@@ -19,12 +19,14 @@ from models.enums.platform import Platform
 from services.misc.database_manager import DatabaseManager
 from services.misc.selenium_helper import SeleniumHelper
 from services.pages.indeed_apply_now_page.indeed_apply_now_page import IndeedApplyNowPage
+from services.misc.language_parser import LanguageParser
 
 
 class IndeedJobListingsPage:
   __driver: uc.Chrome
   __selenium_helper: SeleniumHelper
   __database_manager: DatabaseManager
+  __language_parser: LanguageParser
   __universal_config: UniversalConfig
   __quick_settings: QuickSettings
   __apply_now_page: IndeedApplyNowPage
@@ -36,12 +38,14 @@ class IndeedJobListingsPage:
     driver: uc.Chrome,
     selenium_helper: SeleniumHelper,
     database_manager: DatabaseManager,
+    language_parser: LanguageParser,
     universal_config: UniversalConfig,
     quick_settings: QuickSettings
   ):
     self.__driver = driver
     self.__selenium_helper = selenium_helper
     self.__database_manager = database_manager
+    self.__language_parser = language_parser
     self.__universal_config = universal_config
     self.__quick_settings = quick_settings
     self.__apply_now_page = IndeedApplyNowPage(driver, selenium_helper, universal_config, quick_settings)
@@ -82,7 +86,7 @@ class IndeedJobListingsPage:
       if brief_job_listing is None:
         logging.debug("Skipping a fake Job Listing / advertisement...")
         continue
-      temp_job_listing = IndeedJobListing(brief_job_listing)
+      temp_job_listing = IndeedJobListing(self.__language_parser, brief_job_listing)
       self.__add_job_listing_to_db(temp_job_listing)
       brief_job_listing.print()
       if brief_job_listing.to_minimal_dict() in self.__jobs_applied_to_this_session:
@@ -127,7 +131,7 @@ class IndeedJobListingsPage:
 
   def __build_brief_job_listing(self, job_listing_li: WebElement) -> Optional[IndeedBriefJobListing]:
     try:
-      brief_job_listing = IndeedBriefJobListing(job_listing_li)
+      brief_job_listing = IndeedBriefJobListing(self.__language_parser, job_listing_li)
       return brief_job_listing
     except NoSuchElementException:
       return None
@@ -172,7 +176,7 @@ class IndeedJobListingsPage:
 
   def __build_job_listing(self, brief_job_listing: IndeedBriefJobListing) -> IndeedJobListing:
     job_description_html = self.__get_job_description_html()
-    job_listing = IndeedJobListing(brief_job_listing, job_description_html, self.__driver.current_url)
+    job_listing = IndeedJobListing(self.__language_parser, brief_job_listing, job_description_html, self.__driver.current_url)
     return job_listing
 
   def __apply_to_job(self, brief_job_listing: IndeedBriefJobListing) -> None:

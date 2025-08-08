@@ -3,12 +3,13 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.common.exceptions import NoSuchElementException
 from entities.abc_brief_job_listing import BriefJobListing
+from services.misc.language_parser import LanguageParser
 
 
 class LinkedinBriefJobListing(BriefJobListing):
 
-  def __init__(self, job_listing_li: WebElement):
-    super().__init__()
+  def __init__(self, language_parser: LanguageParser, job_listing_li: WebElement):
+    super().__init__(language_parser)
     relative_job_title_span_xpath = "./div/a/div/div/div[2]/div[1]/div[1]/span[1]/strong"
     job_title_span = job_listing_li.find_element(By.XPATH, relative_job_title_span_xpath)
     self.set_title(job_title_span.text)

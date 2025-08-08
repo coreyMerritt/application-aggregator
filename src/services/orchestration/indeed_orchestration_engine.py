@@ -12,6 +12,7 @@ from services.pages.indeed_login_page import IndeedLoginPage
 from services.pages.indeed_one_time_code_page import IndeedOneTimeCodePage
 from services.pages.indeed_job_listings_page import IndeedJobListingsPage
 from services.query_url_builders.indeed_query_url_builder import IndeedQueryUrlBuilder
+from services.misc.language_parser import LanguageParser
 
 
 class IndeedOrchestrationEngine:
@@ -26,6 +27,7 @@ class IndeedOrchestrationEngine:
     driver: uc.Chrome,
     selenium_helper: SeleniumHelper,
     database_manager: DatabaseManager,
+    language_parser: LanguageParser,
     universal_config: UniversalConfig,
     quick_settings: QuickSettings,
     indeed_config: IndeedConfig
@@ -38,6 +40,7 @@ class IndeedOrchestrationEngine:
       driver,
       selenium_helper,
       database_manager,
+      language_parser,
       universal_config,
       quick_settings
     )

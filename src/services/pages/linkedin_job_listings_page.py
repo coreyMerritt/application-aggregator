@@ -27,6 +27,7 @@ from services.misc.database_manager import DatabaseManager
 from services.misc.proxy_manager import ProxyManager
 from services.pages.linkedin_apply_now_page.linkedin_apply_now_page import LinkedinApplyNowPage
 from services.misc.selenium_helper import SeleniumHelper
+from services.misc.language_parser import LanguageParser
 
 
 class LinkedinJobListingsPage:
@@ -35,6 +36,7 @@ class LinkedinJobListingsPage:
   __universal_config: UniversalConfig
   __quick_settings: QuickSettings
   __database_manager: DatabaseManager
+  __language_parser: LanguageParser
   __linkedin_apply_now_page: LinkedinApplyNowPage
   __proxy_manager: ProxyManager
   __jobs_applied_to_this_session: List[dict[str, str]]
@@ -44,6 +46,7 @@ class LinkedinJobListingsPage:
     driver: uc.Chrome,
     selenium_helper: SeleniumHelper,
     database_manager: DatabaseManager,
+    language_parser: LanguageParser,
     universal_config: UniversalConfig,
     quick_settings: QuickSettings,
     linkedin_config: LinkedinConfig,
@@ -52,6 +55,7 @@ class LinkedinJobListingsPage:
     self.__driver = driver
     self.__selenium_helper = selenium_helper
     self.__database_manager = database_manager
+    self.__language_parser = language_parser
     self.__universal_config = universal_config
     self.__quick_settings = quick_settings
     self.__linkedin_apply_now_page = LinkedinApplyNowPage(
@@ -85,7 +89,7 @@ class LinkedinJobListingsPage:
         logging.info("No Job Listings left -- Finished with query.")
         return
       brief_job_listing = self.__build_new_brief_job_listing(job_listing_li)
-      temp_job_listing = LinkedinJobListing(brief_job_listing)
+      temp_job_listing = LinkedinJobListing(self.__language_parser, brief_job_listing)
       self.__add_job_listing_to_db(temp_job_listing)
       brief_job_listing.print()
       if brief_job_listing.to_minimal_dict() in self.__jobs_applied_to_this_session:
@@ -242,7 +246,7 @@ class LinkedinJobListingsPage:
     self.__selenium_helper.scroll_into_view(job_listing_li)
     while True:
       try:
-        brief_job_listing = LinkedinBriefJobListing(job_listing_li)
+        brief_job_listing = LinkedinBriefJobListing(self.__language_parser, job_listing_li)
         break
       except NoSuchElementException:
         self.__selenium_helper.scroll_down(self.__get_job_listings_ul())
@@ -253,7 +257,12 @@ class LinkedinJobListingsPage:
     while time.time() - start_time < timeout:
       try:
         job_description_content_div = self.__get_job_description_content_div()
-        job_listing = LinkedinJobListing(brief_job_listing, job_description_content_div, self.__driver.current_url)
+        job_listing = LinkedinJobListing(
+          self.__language_parser,
+          brief_job_listing,
+          job_description_content_div,
+          self.__driver.current_url
+        )
         return job_listing
       except StaleElementReferenceException:
         pass

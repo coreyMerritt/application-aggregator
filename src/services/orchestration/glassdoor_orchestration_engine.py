@@ -13,6 +13,7 @@ from services.misc.selenium_helper import SeleniumHelper
 from services.pages.indeed_apply_now_page.indeed_apply_now_page import IndeedApplyNowPage
 from services.pages.glassdoor_login_page import GlassdoorLoginPage
 from services.pages.glassdoor_job_listings_page import GlassdoorJobListingsPage
+from services.misc.language_parser import LanguageParser
 
 
 class GlassdoorOrchestrationEngine:
@@ -28,6 +29,7 @@ class GlassdoorOrchestrationEngine:
     driver: uc.Chrome,
     selenium_helper: SeleniumHelper,
     database_manager: DatabaseManager,
+    language_parser: LanguageParser,
     universal_config: UniversalConfig,
     quick_settings: QuickSettings,
     glassdoor_config: GlassdoorConfig,
@@ -42,6 +44,7 @@ class GlassdoorOrchestrationEngine:
       driver,
       selenium_helper,
       database_manager,
+      language_parser,
       universal_config,
       quick_settings,
       indeed_apply_now_page

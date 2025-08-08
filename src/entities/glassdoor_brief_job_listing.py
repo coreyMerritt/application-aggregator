@@ -1,12 +1,13 @@
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
 from entities.abc_brief_job_listing import BriefJobListing
+from services.misc.language_parser import LanguageParser
 
 
 class GlassdoorBriefJobListing(BriefJobListing):
 
-  def __init__(self, job_listing_li: WebElement):
-    super().__init__()
+  def __init__(self, language_parser: LanguageParser, job_listing_li: WebElement):
+    super().__init__(language_parser)
     job_title_anchor_class = "JobCard_jobTitle__GLyJ1"
     job_title_anchor = job_listing_li.find_element(By.CLASS_NAME, job_title_anchor_class)
     self.set_title(job_title_anchor.text.strip())

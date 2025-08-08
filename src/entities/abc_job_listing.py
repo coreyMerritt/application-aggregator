@@ -10,10 +10,9 @@ class JobListing(BriefJobListing):
   __min_yoe: int | None = None
   __max_yoe: int | None = None
   __description: str | None
-  __language_parser: LanguageParser
 
-  def __init__(self):
-    self.__language_parser = LanguageParser()
+  def __init__(self, language_parser: LanguageParser):
+    super().__init__(language_parser)
 
   def get_min_yoe(self) -> int | None:
     return self.__min_yoe
@@ -33,7 +32,7 @@ class JobListing(BriefJobListing):
       content_blob += self.__description
     else:
       content_blob += self.get_location()
-    return self.__language_parser.get_language(content_blob)
+    return self._get_language_parser().get_language(content_blob)
 
   def set_min_yoe(self, yoe: int | None) -> None:
     self.__min_yoe = yoe

@@ -1,18 +1,19 @@
-from langdetect import detect
+import time
+import langid
 from models.enums.language import Language
 
 class LanguageParser:
-  def get_language(self, string: str) -> Language:
-    lang_code = detect(string)
-    return self._map_lang_code(lang_code)
+  def __init__(self):
+    langid.set_languages(['en', 'es', 'fr'])
 
-  def _map_lang_code(self, code: str) -> Language:
-    if code == "en":
+  def get_language(self, string: str) -> Language:
+    lang_code = langid.classify("Senior Software Engineer")[0]
+    if lang_code == "en":
       return Language.ENGLISH
-    input("Found a nonenglish -- do we return???")
-    if code == "es":
+    input("Not english")
+    if lang_code == "es":
       return Language.SPANISH
-    elif code == "fr":
+    elif lang_code == "fr":
       return Language.FRENCH
     else:
       return Language.UNKNOWN

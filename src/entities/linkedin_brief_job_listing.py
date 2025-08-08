@@ -8,6 +8,7 @@ from entities.abc_brief_job_listing import BriefJobListing
 class LinkedinBriefJobListing(BriefJobListing):
 
   def __init__(self, job_listing_li: WebElement):
+    super().__init__()
     relative_job_title_span_xpath = "./div/a/div/div/div[2]/div[1]/div[1]/span[1]/strong"
     job_title_span = job_listing_li.find_element(By.XPATH, relative_job_title_span_xpath)
     self.set_title(job_title_span.text)

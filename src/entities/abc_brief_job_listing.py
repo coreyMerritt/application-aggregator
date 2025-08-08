@@ -4,6 +4,8 @@ import re
 from typing import List
 from models.configs.quick_settings import QuickSettings
 from models.configs.universal_config import SearchSalary, UniversalConfig
+from models.enums.language import Language
+from services.misc.language_parser import LanguageParser
 
 
 class BriefJobListing(ABC):
@@ -15,6 +17,10 @@ class BriefJobListing(ABC):
   __ignore_category: str | None = None
   __ignore_term: str | None = None
   __url: str
+  __language_parser: LanguageParser
+
+  def __init__(self):
+    self.__language_parser = LanguageParser()
 
   def get_title(self) -> str:
     return self.__title
@@ -39,6 +45,13 @@ class BriefJobListing(ABC):
 
   def get_url(self) -> str:
     return self.__url
+
+  def get_language(self) -> Language:
+    content_blob = ""
+    content_blob += f"{self.get_title()} "
+    content_blob += f"{self.get_company()} "
+    content_blob += self.get_location()
+    return self.__language_parser.get_language(content_blob)
 
   def set_title(self, title: str) -> None:
     self.__title = title

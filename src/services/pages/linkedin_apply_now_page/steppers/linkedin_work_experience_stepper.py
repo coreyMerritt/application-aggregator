@@ -38,6 +38,7 @@ class LinkedinWorkExperienceStepper:
 
   def resolve(self) -> None:
     self.__remove_all_work_experience()
+    time.sleep(0.1)
     self.__add_all_work_experience()
 
   def __remove_all_work_experience(self) -> None:

@@ -19,6 +19,7 @@ from exceptions.zero_search_results_exception import ZeroSearchResultsException
 from models.configs.quick_settings import QuickSettings
 from models.enums.element_type import ElementType
 from models.configs.universal_config import UniversalConfig
+from models.enums.language import Language
 from models.enums.platform import Platform
 from services.misc.database_manager import DatabaseManager
 from services.pages.indeed_apply_now_page.indeed_apply_now_page import IndeedApplyNowPage
@@ -81,29 +82,31 @@ class GlassdoorJobListingsPage:
       if not self.__is_job_listing(job_listing_li):
         continue
       brief_job_listing = GlassdoorBriefJobListing(job_listing_li)
+      temp_job_listing = GlassdoorJobListing(brief_job_listing)
+      self.__add_job_listing_to_db(temp_job_listing)
       brief_job_listing.print()
-      if not brief_job_listing.passes_filter_check(self.__universal_config, self.__quick_settings):
-        temp_job_listing = GlassdoorJobListing(brief_job_listing)
-        self.__add_job_listing_to_db(temp_job_listing)
-        self.__add_application_to_db(temp_job_listing)
-        continue
       if brief_job_listing.to_minimal_dict() in self.__jobs_applied_to_this_session:
         logging.info("Ignoring Job Listing because: we've already applied this session.\n")
         continue
-      temp_job_listing = GlassdoorJobListing(brief_job_listing)
-      self.__add_job_listing_to_db(temp_job_listing)
-      self.__add_application_to_db(temp_job_listing)
+      if brief_job_listing.get_language() != Language.ENGLISH:
+        logging.info("Ignoring Job Listing because its not in english.")
+        continue
+      if not brief_job_listing.passes_filter_check(self.__universal_config, self.__quick_settings):
+        self.__add_application_to_db(temp_job_listing)
+        continue
       self.__remove_create_job_dialog()
       self.__remove_survey_popup()
       job_listing_li.click()
       job_listing = self.__build_job_listing(brief_job_listing)
+      self.__add_job_listing_to_db(job_listing)
+      if job_listing.get_language() != Language.ENGLISH:
+        logging.info("Ignoring Job Listing because its not in english.")
+        continue
       if not job_listing.passes_filter_check(self.__universal_config, self.__quick_settings):
-        self.__add_job_listing_to_db(job_listing)
         self.__add_application_to_db(job_listing)
         continue
       self.__apply_to_selected_job()
       self.__jobs_applied_to_this_session.append(brief_job_listing.to_minimal_dict())
-      self.__add_job_listing_to_db(job_listing)
       self.__add_application_to_db(job_listing)
       self.__handle_potential_overload()
 

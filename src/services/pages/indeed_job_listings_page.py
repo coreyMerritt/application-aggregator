@@ -11,10 +11,10 @@ from selenium.common.exceptions import (
 )
 from entities.indeed_brief_job_listing import IndeedBriefJobListing
 from entities.indeed_job_listing import IndeedJobListing
-from models.configs.indeed_config import IndeedConfig
 from models.configs.quick_settings import QuickSettings
 from models.configs.universal_config import UniversalConfig
 from models.enums.element_type import ElementType
+from models.enums.language import Language
 from models.enums.platform import Platform
 from services.misc.database_manager import DatabaseManager
 from services.misc.selenium_helper import SeleniumHelper
@@ -27,7 +27,6 @@ class IndeedJobListingsPage:
   __database_manager: DatabaseManager
   __universal_config: UniversalConfig
   __quick_settings: QuickSettings
-  __indeed_config: IndeedConfig
   __apply_now_page: IndeedApplyNowPage
   __jobs_applied_to_this_session: List[dict[str, str]]
   __current_page_number: int
@@ -38,15 +37,13 @@ class IndeedJobListingsPage:
     selenium_helper: SeleniumHelper,
     database_manager: DatabaseManager,
     universal_config: UniversalConfig,
-    quick_settings: QuickSettings,
-    indeed_config: IndeedConfig
+    quick_settings: QuickSettings
   ):
     self.__driver = driver
     self.__selenium_helper = selenium_helper
     self.__database_manager = database_manager
     self.__universal_config = universal_config
     self.__quick_settings = quick_settings
-    self.__indeed_config = indeed_config
     self.__apply_now_page = IndeedApplyNowPage(driver, selenium_helper, universal_config, quick_settings)
     self.__jobs_applied_to_this_session = []
     self.__current_page_number = 1
@@ -85,18 +82,18 @@ class IndeedJobListingsPage:
       if brief_job_listing is None:
         logging.debug("Skipping a fake Job Listing / advertisement...")
         continue
+      temp_job_listing = IndeedJobListing(brief_job_listing)
+      self.__add_job_listing_to_db(temp_job_listing)
       brief_job_listing.print()
-      if not brief_job_listing.passes_filter_check(self.__universal_config, self.__quick_settings):
-        temp_job_listing = IndeedJobListing(brief_job_listing)
-        self.__add_job_listing_to_db(temp_job_listing)
-        self.__add_application_to_db(temp_job_listing)
-        continue
       if brief_job_listing.to_minimal_dict() in self.__jobs_applied_to_this_session:
         logging.info("Ignoring Job Listing because: we've already applied this session.\n")
         continue
-      temp_job_listing = IndeedJobListing(brief_job_listing)
-      self.__add_job_listing_to_db(temp_job_listing)
-      self.__add_application_to_db(temp_job_listing)
+      if brief_job_listing.get_language() != Language.ENGLISH:
+        logging.info("Ignoring Job Listing because its not in english.")
+        continue
+      if not brief_job_listing.passes_filter_check(self.__universal_config, self.__quick_settings):
+        self.__add_application_to_db(temp_job_listing)
+        continue
       self.__open_job_in_new_tab(job_listing_li)
       try:
         self.__wait_for_new_job_tab_to_load()
@@ -106,10 +103,13 @@ class IndeedJobListingsPage:
         self.__driver.switch_to.window(self.__driver.window_handles[0])
         continue
       job_listing = self.__build_job_listing(brief_job_listing)
+      self.__add_job_listing_to_db(job_listing)
+      if job_listing.get_language() != Language.ENGLISH:
+        logging.info("Ignoring Job Listing because its not in english.")
+        continue
       if not job_listing.passes_filter_check(self.__universal_config, self.__quick_settings):
         self.__driver.close()
         self.__driver.switch_to.window(self.__driver.window_handles[0])
-        self.__add_job_listing_to_db(job_listing)
         self.__add_application_to_db(job_listing)
         continue
       while not self.__is_apply_now_span() and not self.__is_apply_on_company_site_span():
@@ -122,7 +122,6 @@ class IndeedJobListingsPage:
         continue
       self.__apply_to_job(brief_job_listing)
       self.__driver.switch_to.window(self.__driver.window_handles[0])
-      self.__add_job_listing_to_db(job_listing)
       self.__add_application_to_db(job_listing)
       self.__handle_potential_overload()
 

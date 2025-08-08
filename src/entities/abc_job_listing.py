@@ -2,12 +2,18 @@ import logging
 from entities.abc_brief_job_listing import BriefJobListing
 from models.configs.quick_settings import QuickSettings
 from models.configs.universal_config import UniversalConfig
+from models.enums.language import Language
+from services.misc.language_parser import LanguageParser
 
 
 class JobListing(BriefJobListing):
   __min_yoe: int | None = None
   __max_yoe: int | None = None
   __description: str | None
+  __language_parser: LanguageParser
+
+  def __init__(self):
+    self.__language_parser = LanguageParser()
 
   def get_min_yoe(self) -> int | None:
     return self.__min_yoe
@@ -17,6 +23,17 @@ class JobListing(BriefJobListing):
 
   def get_description(self) -> str | None:
     return self.__description
+
+  def get_language(self) -> Language:
+    content_blob = ""
+    content_blob += f"{self.get_title()} "
+    content_blob += f"{self.get_company()} "
+    if self.__description:
+      content_blob += f"{self.get_location()} "
+      content_blob += self.__description
+    else:
+      content_blob += self.get_location()
+    return self.__language_parser.get_language(content_blob)
 
   def set_min_yoe(self, yoe: int | None) -> None:
     self.__min_yoe = yoe

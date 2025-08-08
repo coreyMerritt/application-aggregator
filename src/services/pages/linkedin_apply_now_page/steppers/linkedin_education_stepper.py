@@ -101,23 +101,42 @@ class LinkedinEducationStepper:
       )
       add_more_button = add_more_span.find_element(By.XPATH, "..")
       add_more_button.click()
-      if self.__is_school_label():
-        self.__add_school(degree.school)
-      if self.__is_city_span():
-        self.__add_city(city)
-      if self.__is_degree_type_label():
-        self.__add_degree_type(degree.degree_type)
-      if self.__is_field_of_study_label():
-        self.__add_field_of_study(degree.field_of_study)
-      if self.__is_currently_attending_label():
-        if degree.currently_attending:
-          self.__click_currently_attending()
-      if self.__is_start_time_fieldset():
-        self.__add_start_time(degree.start)
-      if self.__is_end_time_fieldset():
-        if not degree.currently_attending:
-          self.__add_end_time(degree.end)
+      if self.__is_input_based_stepper():
+        if self.__is_school_label():
+          self.__add_school_by_label(degree.school)
+        if self.__is_city_span():
+          self.__add_city(city)
+        if self.__is_degree_type_label():
+          self.__add_degree_type_by_label(degree.degree_type)
+        if self.__is_field_of_study_label():
+          self.__add_field_of_study_by_label(degree.field_of_study)
+        if self.__is_currently_attending_label():
+          if degree.currently_attending:
+            self.__click_currently_attending()
+        if self.__is_start_time_fieldset():
+          self.__add_start_time(degree.start)
+        if self.__is_end_time_fieldset():
+          if not degree.currently_attending:
+            self.__add_end_time(degree.end)
+      else:
+        if self.__is_currently_attending_label():
+          if degree.currently_attending:
+            self.__click_currently_attending()
+        if self.__is_start_time_fieldset_alt():
+          self.__add_start_time_alt(degree.start)
+        if self.__is_end_time_fieldset_alt():
+          if not degree.currently_attending:
+            self.__add_end_time_alt(degree.end)
+        if self.__is_school_span():
+          self.__add_school_by_span(degree.school)
+        if self.__is_degree_type_span():
+          self.__add_degree_type_by_span(degree.degree_type)
+        if self.__is_field_of_study_span():
+          self.__add_field_of_study_by_span(degree.field_of_study)
       self.__save()
+
+  def __is_input_based_stepper(self) -> bool:
+    return self.__is_school_label()
 
   def __is_school_label(self) -> bool:
     return self.__selenium_helper.exact_text_is_present(
@@ -126,7 +145,7 @@ class LinkedinEducationStepper:
       self.__context_element
     )
 
-  def __add_school(self, school: str) -> None:
+  def __add_school_by_label(self, school: str) -> None:
     assert self.__is_school_label()
     school_label = self.__selenium_helper.get_element_by_exact_text(
       "School",
@@ -162,7 +181,7 @@ class LinkedinEducationStepper:
       self.__context_element
     )
 
-  def __add_degree_type(self, degree_type: str) -> None:
+  def __add_degree_type_by_label(self, degree_type: str) -> None:
     assert self.__is_degree_type_label()
     degree_label = self.__selenium_helper.get_element_by_exact_text(
       "Degree",
@@ -208,7 +227,7 @@ class LinkedinEducationStepper:
       self.__context_element
     )
 
-  def __add_field_of_study(self, field_of_study: str) -> None:
+  def __add_field_of_study_by_label(self, field_of_study: str) -> None:
     assert self.__is_field_of_study_label()
     field_of_study_label = self.__selenium_helper.get_element_by_exact_text(
       "Major / Field of study",
@@ -271,6 +290,96 @@ class LinkedinEducationStepper:
     relative_end_year_select_xpath = "./div/span[2]/select"
     end_year_select = Select(end_time_fieldset.find_element(By.XPATH, relative_end_year_select_xpath))
     end_year_select.select_by_value(str(end.year))
+
+  def __is_start_time_fieldset_alt(self) -> bool:
+    relative_start_time_fieldset_xpath = "./div[2]/div/div[2]/form/div[1]/div/div[1]/div[1]/div[2]/div/div[1]/fieldset[1]"    # pylint: disable=line-too-long
+    try:
+      self.__context_element.find_element(By.XPATH, relative_start_time_fieldset_xpath)
+      return True
+    except NoSuchElementException:
+      return False
+
+  def __add_start_time_alt(self, start: Date) -> None:
+    assert self.__is_start_time_fieldset_alt()
+    relative_start_time_fieldset_xpath = "./div[2]/div/div[2]/form/div[1]/div/div[1]/div[1]/div[2]/div/div[1]/fieldset[1]"     # pylint: disable=line-too-long
+    start_time_fieldset = self.__context_element.find_element(By.XPATH, relative_start_time_fieldset_xpath)
+    relative_start_month_select_xpath = "./div/span[1]/select"
+    start_month_select = Select(start_time_fieldset.find_element(By.XPATH, relative_start_month_select_xpath))
+    start_month_select.select_by_index(start.month)
+    relative_start_year_select_xpath = "./div/span[2]/select"
+    start_year_select = Select(start_time_fieldset.find_element(By.XPATH, relative_start_year_select_xpath))
+    start_year_select.select_by_value(str(start.year))
+
+  def __is_end_time_fieldset_alt(self) -> bool:
+    relative_end_time_fieldset_xpath = "./div[2]/div/div[2]/form/div[1]/div/div[1]/div[1]/div[2]/div/div[1]/fieldset[2]"
+    try:
+      self.__context_element.find_element(By.XPATH, relative_end_time_fieldset_xpath)
+      return True
+    except NoSuchElementException:
+      return False
+
+  def __add_end_time_alt(self, end: Date) -> None:
+    assert self.__is_end_time_fieldset_alt()
+    relative_end_time_fieldset_xpath = "./div[2]/div/div[2]/form/div[1]/div/div[1]/div[1]/div[2]/div/div[1]/fieldset[2]"
+    end_time_fieldset = self.__context_element.find_element(By.XPATH, relative_end_time_fieldset_xpath)
+    relative_end_month_select_xpath = "./div/span[1]/select"
+    end_month_select = Select(end_time_fieldset.find_element(By.XPATH, relative_end_month_select_xpath))
+    end_month_select.select_by_index(end.month)
+    relative_end_year_select_xpath = "./div/span[2]/select"
+    end_year_select = Select(end_time_fieldset.find_element(By.XPATH, relative_end_year_select_xpath))
+    end_year_select.select_by_value(str(end.year))
+
+
+  def __is_school_span(self) -> bool:
+    return self.__selenium_helper.exact_text_is_present(
+      "School",
+      ElementType.SPAN,
+      self.__context_element
+    )
+
+  def __add_school_by_span(self, school: str) -> None:
+    assert self.__is_school_span()
+    school_span = self.__selenium_helper.get_element_by_exact_text(
+      "School",
+      ElementType.SPAN,
+      self.__context_element
+    )
+    school_select = school_span.find_element(By.XPATH, "../../select")
+    self.__selenium_helper.write_to_select(school, school_select)
+
+  def __is_degree_type_span(self) -> bool:
+    return self.__selenium_helper.exact_text_is_present(
+      "Degree",
+      ElementType.SPAN,
+      self.__context_element
+    )
+
+  def __add_degree_type_by_span(self, degree_type: str) -> None:
+    assert self.__is_degree_type_span()
+    degree_type_span = self.__selenium_helper.get_element_by_exact_text(
+      "Degree",
+      ElementType.SPAN,
+      self.__context_element
+    )
+    degree_type_select = degree_type_span.find_element(By.XPATH, "../../select")
+    self.__selenium_helper.write_to_select(degree_type, degree_type_select)
+
+  def __is_field_of_study_span(self) -> bool:
+    return self.__selenium_helper.exact_text_is_present(
+      "Discipline",
+      ElementType.SPAN,
+      self.__context_element
+    )
+
+  def __add_field_of_study_by_span(self, field_of_study: str) -> None:
+    assert self.__is_field_of_study_span()
+    field_of_study_span = self.__selenium_helper.get_element_by_exact_text(
+      "Discipline",
+      ElementType.SPAN,
+      self.__context_element
+    )
+    field_of_study_select = field_of_study_span.find_element(By.XPATH, "../../select")
+    self.__selenium_helper.write_to_select(field_of_study, field_of_study_select)
 
   def __save(self) -> None:
     save_span = self.__selenium_helper.get_element_by_exact_text(

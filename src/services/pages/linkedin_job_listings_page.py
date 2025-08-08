@@ -21,6 +21,7 @@ from models.configs.quick_settings import QuickSettings
 from models.enums.element_type import ElementType
 from models.configs.linkedin_config import LinkedinConfig
 from models.configs.universal_config import UniversalConfig
+from models.enums.language import Language
 from models.enums.platform import Platform
 from services.misc.database_manager import DatabaseManager
 from services.misc.proxy_manager import ProxyManager
@@ -84,18 +85,18 @@ class LinkedinJobListingsPage:
         logging.info("No Job Listings left -- Finished with query.")
         return
       brief_job_listing = self.__build_new_brief_job_listing(job_listing_li)
-      brief_job_listing.print()
-      if not brief_job_listing.passes_filter_check(self.__universal_config, self.__quick_settings):
-        logging.info("Ignoring Brief Job Listing because it doesn't pass the filter check. Skipping...")
-        temp_job_listing = LinkedinJobListing(brief_job_listing)
-        self.__add_job_listing_to_db(temp_job_listing)
-        self.__add_application_to_db(temp_job_listing)
-        continue
       temp_job_listing = LinkedinJobListing(brief_job_listing)
       self.__add_job_listing_to_db(temp_job_listing)
-      self.__add_application_to_db(temp_job_listing)
+      brief_job_listing.print()
       if brief_job_listing.to_minimal_dict() in self.__jobs_applied_to_this_session:
         logging.info("Ignoring Brief Job Listing because we've already applied this session. Skipping...")
+        continue
+      if brief_job_listing.get_language() != Language.ENGLISH:
+        logging.info("Ignoring Job Listing because its not in english.")
+        continue
+      if not brief_job_listing.passes_filter_check(self.__universal_config, self.__quick_settings):
+        logging.info("Ignoring Brief Job Listing because it doesn't pass the filter check. Skipping...")
+        self.__add_application_to_db(temp_job_listing)
         continue
       if self.__something_went_wrong():
         logging.info('"Something went wrong", likely rate limited behavior. Skipping...')
@@ -105,9 +106,12 @@ class LinkedinJobListingsPage:
       except StaleElementReferenceException:
         job_listing_li = self.__get_job_listing_li(job_listing_li_index)
       job_listing = self.__build_new_job_listing(brief_job_listing)
+      self.__add_job_listing_to_db(job_listing)
+      if job_listing.get_language() != Language.ENGLISH:
+        logging.info("Ignoring Job Listing because its not in english.")
+        continue
       if not job_listing.passes_filter_check(self.__universal_config, self.__quick_settings):
         logging.info("Ignoring Job Listing because it doesn't pass the filter check. Skipping...")
-        self.__add_job_listing_to_db(job_listing)
         self.__add_application_to_db(job_listing)
         continue
       if not self.__is_apply_button() and not self.__is_easy_apply_button():
@@ -119,7 +123,6 @@ class LinkedinJobListingsPage:
         input("Lets get a proper logging statement in here -- what happened?")
       self.__driver.switch_to.window(self.__driver.window_handles[0])
       self.__jobs_applied_to_this_session.append(brief_job_listing.to_minimal_dict())
-      self.__add_job_listing_to_db(job_listing)
       self.__add_application_to_db(job_listing)
       self.__handle_potential_overload()
 

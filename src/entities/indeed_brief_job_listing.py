@@ -6,6 +6,7 @@ from entities.abc_brief_job_listing import BriefJobListing
 class IndeedBriefJobListing(BriefJobListing):
 
   def __init__(self, job_listing_li: WebElement):
+    super().__init__()
     relative_title_span_xpath = "./div/div/div/div/div/div/table/tbody/tr/td/div[1]/h2/a/span"
     relative_title_span = job_listing_li.find_element(By.XPATH, relative_title_span_xpath)
     self.set_title(relative_title_span.text.strip())

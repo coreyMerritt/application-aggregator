@@ -312,7 +312,8 @@ class LinkedinResumeStepper:
       const style = window.getComputedStyle(el, '::after');
       return style.getPropertyValue('content');
     """, label)
-    if after_content:
+    if after_content and after_content != "none":
+      print(f"DEBUG: after_content: {after_content}")
       input("DEBUG: Cover letter is required.")
       return True
     return False

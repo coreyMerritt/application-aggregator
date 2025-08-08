@@ -6,6 +6,7 @@ from entities.abc_brief_job_listing import BriefJobListing
 class GlassdoorBriefJobListing(BriefJobListing):
 
   def __init__(self, job_listing_li: WebElement):
+    super().__init__()
     job_title_anchor_class = "JobCard_jobTitle__GLyJ1"
     job_title_anchor = job_listing_li.find_element(By.CLASS_NAME, job_title_anchor_class)
     self.set_title(job_title_anchor.text.strip())

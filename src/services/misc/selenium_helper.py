@@ -3,6 +3,7 @@ import undetected_chromedriver as uc
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.remote.webelement import WebElement
+from selenium.webdriver.support.ui import Select
 from selenium.common.exceptions import NoSuchElementException
 from selenium.common.exceptions import StaleElementReferenceException
 from models.configs.system_config import SystemConfig
@@ -178,6 +179,14 @@ class SeleniumHelper:
       input_el.send_keys(Keys.CONTROL + "a")
       input_el.send_keys(Keys.BACKSPACE)
       input_el.send_keys(some_text)
+
+  def write_to_select(self, some_text: str, select_el: WebElement) -> None:
+    logging.debug("Selecting: %s from dropdown...", some_text)
+    self.__driver.execute_script("""
+      const el = arguments[0];
+      el.value = arguments[1];
+      el.dispatchEvent(new Event('change'));
+    """, select_el, some_text)
 
   def check_box_by_name(self, some_name: str, checked: bool = True) -> None:
     logging.debug("Setting checkbox %s to %s", some_name, checked)

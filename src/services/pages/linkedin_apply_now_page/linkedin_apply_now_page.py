@@ -169,8 +169,6 @@ class LinkedinApplyNowPage:
   def __continue_stepper(self) -> None:
     element_to_search = self.__easy_apply_div
     while True:
-      self.__driver.find_element(By.TAG_NAME, "body").click()
-      time.sleep(0.1)
       try:
         next_span = self.__selenium_helper.get_element_by_exact_text("Next", ElementType.SPAN, element_to_search)
         next_button = next_span.find_element(By.XPATH, "..")

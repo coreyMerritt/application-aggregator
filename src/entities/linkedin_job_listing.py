@@ -14,6 +14,7 @@ class LinkedinJobListing(JobListing):
     job_description_content_div: WebElement | None = None,
     url: str | None = None
   ):
+    super().__init__()
     self.set_title(brief_job_listing.get_title())
     self.set_company(brief_job_listing.get_company())
     self.set_location(brief_job_listing.get_location())

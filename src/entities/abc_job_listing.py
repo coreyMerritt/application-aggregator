@@ -7,7 +7,7 @@ from models.configs.universal_config import UniversalConfig
 class JobListing(BriefJobListing):
   __min_yoe: int | None = None
   __max_yoe: int | None = None
-  __description: str
+  __description: str | None
 
   def get_min_yoe(self) -> int | None:
     return self.__min_yoe
@@ -15,7 +15,7 @@ class JobListing(BriefJobListing):
   def get_max_yoe(self) -> int | None:
     return self.__max_yoe
 
-  def get_description(self) -> str:
+  def get_description(self) -> str | None:
     return self.__description
 
   def set_min_yoe(self, yoe: int | None) -> None:
@@ -24,7 +24,7 @@ class JobListing(BriefJobListing):
   def set_max_yoe(self, yoe: int | None) -> None:
     self.__max_yoe = yoe
 
-  def set_description(self, description: str) -> None:
+  def set_description(self, description: str | None) -> None:
     self.__description = description
 
   def passes_filter_check(self, universal_config: UniversalConfig, quick_settings: QuickSettings) -> bool:
@@ -71,10 +71,12 @@ class JobListing(BriefJobListing):
     for ideal_location in universal_config.bot_behavior.ideal.locations:
       if self._phrase_is_in_phrase(ideal_location, location):
         return True
-    description = self.get_description().lower().strip()
-    for ideal_description in universal_config.bot_behavior.ideal.descriptions:
-      if self._phrase_is_in_phrase(ideal_description, description):
-        return True
+    description = self.get_description()
+    if description:
+      description = description.lower().strip()
+      for ideal_description in universal_config.bot_behavior.ideal.descriptions:
+        if self._phrase_is_in_phrase(ideal_description, description):
+          return True
     return False
 
   def _passes_ignore_filters(self, universal_config: UniversalConfig) -> bool:
@@ -124,12 +126,14 @@ class JobListing(BriefJobListing):
     return True
 
   def _description_is_passable(self, universal_config: UniversalConfig) -> bool:
-    description = self.get_description().lower().strip()
-    for description_to_ignore in universal_config.bot_behavior.ignore.descriptions:
-      if self._phrase_is_in_phrase(description_to_ignore, description):
-        logging.info("Found ignore term in description: %s.", description_to_ignore)
-        description_to_ignore = str(description_to_ignore)
-        self.set_ignore_category("Description")
-        self.set_ignore_term(description_to_ignore)
-        return False
+    description = self.get_description()
+    if description:
+      description = description.lower().strip()
+      for description_to_ignore in universal_config.bot_behavior.ignore.descriptions:
+        if self._phrase_is_in_phrase(description_to_ignore, description):
+          logging.info("Found ignore term in description: %s.", description_to_ignore)
+          description_to_ignore = str(description_to_ignore)
+          self.set_ignore_category("Description")
+          self.set_ignore_term(description_to_ignore)
+          return False
     return True

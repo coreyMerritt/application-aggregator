@@ -87,9 +87,13 @@ class LinkedinJobListingsPage:
       brief_job_listing.print()
       if not brief_job_listing.passes_filter_check(self.__universal_config, self.__quick_settings):
         logging.info("Ignoring Brief Job Listing because it doesn't pass the filter check. Skipping...")
-        self.__add_brief_job_listing_to_db(brief_job_listing)
+        temp_job_listing = LinkedinJobListing(brief_job_listing)
+        self.__add_job_listing_to_db(temp_job_listing)
+        self.__add_application_to_db(temp_job_listing)
         continue
-      self.__add_brief_job_listing_to_db(brief_job_listing)
+      temp_job_listing = LinkedinJobListing(brief_job_listing)
+      self.__add_job_listing_to_db(temp_job_listing)
+      self.__add_application_to_db(temp_job_listing)
       if brief_job_listing.to_minimal_dict() in self.__jobs_applied_to_this_session:
         logging.info("Ignoring Brief Job Listing because we've already applied this session. Skipping...")
         continue
@@ -104,6 +108,7 @@ class LinkedinJobListingsPage:
       if not job_listing.passes_filter_check(self.__universal_config, self.__quick_settings):
         logging.info("Ignoring Job Listing because it doesn't pass the filter check. Skipping...")
         self.__add_job_listing_to_db(job_listing)
+        self.__add_application_to_db(job_listing)
         continue
       if not self.__is_apply_button() and not self.__is_easy_apply_button():
         logging.info("This Job Listing has no apply button. Skipping...")
@@ -115,6 +120,7 @@ class LinkedinJobListingsPage:
       self.__driver.switch_to.window(self.__driver.window_handles[0])
       self.__jobs_applied_to_this_session.append(brief_job_listing.to_minimal_dict())
       self.__add_job_listing_to_db(job_listing)
+      self.__add_application_to_db(job_listing)
       self.__handle_potential_overload()
 
   def __handle_incrementors(self, total_jobs_tried: int, job_listing_li_index: int) -> Tuple[int, int]:
@@ -471,15 +477,14 @@ class LinkedinJobListingsPage:
       print("\nCurrent memory usage is too high. Please clean up existing tabs to continue safely.")
       input("\tPress enter to proceed...")
 
-  def __add_brief_job_listing_to_db(self, brief_job_listing: LinkedinBriefJobListing) -> None:
-    self.__database_manager.create_new_brief_job_listing(
-      self.__universal_config,
-      brief_job_listing,
+  def __add_job_listing_to_db(self, job_listing: LinkedinJobListing) -> None:
+    self.__database_manager.create_new_job_listing(
+      job_listing,
       Platform.LINKEDIN
     )
 
-  def __add_job_listing_to_db(self, job_listing: LinkedinJobListing) -> None:
-    self.__database_manager.create_new_job_listing(
+  def __add_application_to_db(self, job_listing: LinkedinJobListing) -> None:
+    self.__database_manager.create_new_application(
       self.__universal_config,
       job_listing,
       Platform.LINKEDIN

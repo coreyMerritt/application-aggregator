@@ -47,7 +47,8 @@ class GlassdoorOrchestrationEngine:
       indeed_apply_now_page
     )
 
-  def apply(self):
+
+  def login(self) -> None:
     logging.info("Applying on Glassdoor...")
     base_url = "https://www.glassdoor.com"
     while True:
@@ -59,6 +60,8 @@ class GlassdoorOrchestrationEngine:
         logging.warning("Timed out. Trying again...")
         time.sleep(0.5)
     self.__glassdoor_login_page.login()
+
+  def apply(self) -> None:
     search_terms = self.__universal_config.search.terms.match
     try:
       for search_term in search_terms:

@@ -27,7 +27,7 @@ class LinkedinLoginPage:
     password = self.__linkedin_config.password
     password_input_id = "password"
     password_input = self.__driver.find_element(By.ID, password_input_id)
-    self.__selenium_helper.write_to_input(password, password_input)
+    self.__selenium_helper.write_to_input(password, password_input, True)
     try:
       self.__selenium_helper.check_box_by_name('rememberMeOptIn', False)
     except JavascriptException:

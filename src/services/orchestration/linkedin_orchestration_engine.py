@@ -47,9 +47,11 @@ class LinkedinOrchestrationEngine:
       proxy_manager
     )
 
-  def apply(self):
+  def login(self) -> None:
     logging.debug("Applying...")
     self.__linkedin_login_page.login()
+
+  def apply(self) -> None:
     query_terms = self.__universal_config.search.terms.match
     if not query_terms or len(query_terms) == 0:
       query_terms = [""]

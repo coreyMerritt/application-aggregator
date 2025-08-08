@@ -24,6 +24,9 @@ class Start:
   __proxy_manager: ProxyManager
   __selenium_helper: SeleniumHelper
   __database_manager: DatabaseManager
+  __indeed_orchestration_engine: IndeedOrchestrationEngine
+  __glassdoor_orchestration_engine: GlassdoorOrchestrationEngine
+  __linkedin_orchestration_engine: LinkedinOrchestrationEngine
 
   def __init__(self):
     self.__configure_logger()
@@ -38,6 +41,37 @@ class Start:
       self.__proxy_manager
     )
     self.__driver = self.__selenium_helper.get_driver()
+    self.__indeed_orchestration_engine = IndeedOrchestrationEngine(
+      self.__driver,
+      self.__selenium_helper,
+      self.__database_manager,
+      self.__config.universal,
+      self.__config.quick_settings,
+      self.__config.indeed
+    )
+    self.__glassdoor_orchestration_engine = GlassdoorOrchestrationEngine(
+      self.__driver,
+      self.__selenium_helper,
+      self.__database_manager,
+      self.__config.universal,
+      self.__config.quick_settings,
+      self.__config.glassdoor,
+      IndeedApplyNowPage(
+        self.__driver,
+        self.__selenium_helper,
+        self.__config.universal,
+        self.__config.quick_settings
+      )
+    )
+    self.__linkedin_orchestration_engine = LinkedinOrchestrationEngine(
+      self.__driver,
+      self.__selenium_helper,
+      self.__database_manager,
+      self.__config.universal,
+      self.__config.quick_settings,
+      self.__config.linkedin,
+      self.__proxy_manager
+    )
 
   def execute(self):
     parser = argparse.ArgumentParser()
@@ -56,12 +90,19 @@ class Start:
       for some_platform in self.__config.quick_settings.bot_behavior.platform_order:
         platform = str(some_platform).lower()
         if platform == Platform.LINKEDIN.value.lower():
+          self.__linkedin_orchestration_engine.login()
+        elif platform == Platform.GLASSDOOR.value.lower():
+          self.__glassdoor_orchestration_engine.login()
+        elif platform == Platform.INDEED.value.lower():
+          self.__indeed_orchestration_engine.login()
+      for some_platform in self.__config.quick_settings.bot_behavior.platform_order:
+        platform = str(some_platform).lower()
+        if platform == Platform.LINKEDIN.value.lower():
           self.__apply_on_linkedin()
         elif platform == Platform.GLASSDOOR.value.lower():
           self.__apply_on_glassdoor()
         elif platform == Platform.INDEED.value.lower():
           self.__apply_on_indeed()
-
       input("\n\tPress enter to exit...")
       self.__remove_all_tabs_except_first()
     except Exception:
@@ -90,52 +131,21 @@ class Start:
       logging.getLogger(name).setLevel(logging.WARNING)
 
   def __apply_on_indeed(self) -> None:
-    indeed_orchestration_engine = IndeedOrchestrationEngine(
-      self.__driver,
-      self.__selenium_helper,
-      self.__database_manager,
-      self.__config.universal,
-      self.__config.quick_settings,
-      self.__config.indeed
-    )
-    indeed_orchestration_engine.apply()
+    self.__indeed_orchestration_engine.apply()
     if self.__config.quick_settings.bot_behavior.pause_after_each_platform:
       input("\nFinished with Indeed. Press enter to proceed...")
     if self.__config.quick_settings.bot_behavior.remove_tabs_after_each_platform:
       self.__remove_all_tabs_except_first()
 
   def __apply_on_glassdoor(self) -> None:
-    glassdoor_orchestration_engine = GlassdoorOrchestrationEngine(
-      self.__driver,
-      self.__selenium_helper,
-      self.__database_manager,
-      self.__config.universal,
-      self.__config.quick_settings,
-      self.__config.glassdoor,
-      IndeedApplyNowPage(
-        self.__driver,
-        self.__selenium_helper,
-        self.__config.universal,
-        self.__config.quick_settings
-      )
-    )
-    glassdoor_orchestration_engine.apply()
+    self.__glassdoor_orchestration_engine.apply()
     if self.__config.quick_settings.bot_behavior.pause_after_each_platform:
       input("\nFinished with Glassdoor. Press enter to proceed...")
     if self.__config.quick_settings.bot_behavior.remove_tabs_after_each_platform:
       self.__remove_all_tabs_except_first()
 
   def __apply_on_linkedin(self) -> None:
-    linkedin_orchestration_engine = LinkedinOrchestrationEngine(
-      self.__driver,
-      self.__selenium_helper,
-      self.__database_manager,
-      self.__config.universal,
-      self.__config.quick_settings,
-      self.__config.linkedin,
-      self.__proxy_manager
-    )
-    linkedin_orchestration_engine.apply()
+    self.__linkedin_orchestration_engine.apply()
     if self.__config.quick_settings.bot_behavior.pause_after_each_platform:
       input("\nFinished with Linkedin. Press enter to proceed...")
     if self.__config.quick_settings.bot_behavior.remove_tabs_after_each_platform:
@@ -152,12 +162,6 @@ class Start:
       self.__print_highest_ignore_terms(args.ignore_terms)
 
   def __print_highest_ignore_terms(self, limit: int) -> None:
-    print("\n" + "Brief Job Listing Ignore Terms".center(50))
-    keywords = self.__database_manager.get_highest_brief_job_listing_ignore_keywords(limit)
-    print(f"{"Category":>11}   {"Term":<20} {"Count"}")
-    print("─" * 50)
-    for category, term, count in keywords:
-      print(f"{category:>11}   {term:<20} {count:07,d}")
     print("\n" + "Job Listing Ignore Terms".center(50))
     keywords = self.__database_manager.get_highest_job_listing_ignore_keywords(limit)
     print(f"{"Category":>11}   {"Term":<20} {"Count"}")

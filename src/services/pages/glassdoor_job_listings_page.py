@@ -83,22 +83,28 @@ class GlassdoorJobListingsPage:
       brief_job_listing = GlassdoorBriefJobListing(job_listing_li)
       brief_job_listing.print()
       if not brief_job_listing.passes_filter_check(self.__universal_config, self.__quick_settings):
-        self.__add_brief_job_listing_to_db(brief_job_listing)
+        temp_job_listing = GlassdoorJobListing(brief_job_listing)
+        self.__add_job_listing_to_db(temp_job_listing)
+        self.__add_application_to_db(temp_job_listing)
         continue
       if brief_job_listing.to_minimal_dict() in self.__jobs_applied_to_this_session:
         logging.info("Ignoring Job Listing because: we've already applied this session.\n")
         continue
-      self.__add_brief_job_listing_to_db(brief_job_listing)
+      temp_job_listing = GlassdoorJobListing(brief_job_listing)
+      self.__add_job_listing_to_db(temp_job_listing)
+      self.__add_application_to_db(temp_job_listing)
       self.__remove_create_job_dialog()
       self.__remove_survey_popup()
       job_listing_li.click()
       job_listing = self.__build_job_listing(brief_job_listing)
       if not job_listing.passes_filter_check(self.__universal_config, self.__quick_settings):
         self.__add_job_listing_to_db(job_listing)
+        self.__add_application_to_db(job_listing)
         continue
       self.__apply_to_selected_job()
       self.__jobs_applied_to_this_session.append(brief_job_listing.to_minimal_dict())
       self.__add_job_listing_to_db(job_listing)
+      self.__add_application_to_db(job_listing)
       self.__handle_potential_overload()
 
   def __confirm_page_stability(self, timeout=60.0) -> None:
@@ -357,15 +363,14 @@ class GlassdoorJobListingsPage:
       print("\nCurrent memory usage is too high. Please clean up existing tabs to continue safely.")
       input("\tPress enter to proceed...")
 
-  def __add_brief_job_listing_to_db(self, brief_job_listing: GlassdoorBriefJobListing) -> None:
-    self.__database_manager.create_new_brief_job_listing(
-      self.__universal_config,
-      brief_job_listing,
+  def __add_job_listing_to_db(self, job_listing: GlassdoorJobListing) -> None:
+    self.__database_manager.create_new_job_listing(
+      job_listing,
       Platform.GLASSDOOR
     )
 
-  def __add_job_listing_to_db(self, job_listing: GlassdoorJobListing) -> None:
-    self.__database_manager.create_new_job_listing(
+  def __add_application_to_db(self, job_listing: GlassdoorJobListing) -> None:
+    self.__database_manager.create_new_application(
       self.__universal_config,
       job_listing,
       Platform.GLASSDOOR

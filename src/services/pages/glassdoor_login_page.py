@@ -3,6 +3,7 @@ import time
 import undetected_chromedriver as uc
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import ElementClickInterceptedException, NoSuchElementException, TimeoutException
+from selenium.webdriver.support.ui import WebDriverWait
 from models.enums.element_type import ElementType
 from models.configs.glassdoor_config import GlassdoorConfig
 from services.misc.selenium_helper import SeleniumHelper
@@ -75,6 +76,12 @@ class GlassdoorLoginPage:
         break
       except TimeoutException:
         self.login()    # This is experimental, not sure this is safe yet
+    WebDriverWait(self.__driver, 20).until(
+      lambda d: expected_landing_url in d.current_url
+    )
+    WebDriverWait(self.__driver, 20).until(
+      lambda d: d.execute_script("return document.readyState") == "complete"
+    )
 
   def __wait_for_email_form(self, timeout=10) -> None:
     email_form_name = "emailForm"

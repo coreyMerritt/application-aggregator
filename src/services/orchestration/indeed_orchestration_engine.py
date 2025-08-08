@@ -43,7 +43,7 @@ class IndeedOrchestrationEngine:
       indeed_config
     )
 
-  def apply(self) -> None:
+  def login(self) -> None:
     base_url = "https://www.indeed.com"
     logging.debug("Applying to %s...", base_url)
     self.__indeed_login_page.login()
@@ -54,6 +54,8 @@ class IndeedOrchestrationEngine:
       time.sleep(1)
       self.__indeed_one_time_code_page.resolve_with_mail_dot_com()
     self.__indeed_one_time_code_page.wait_for_captcha_resolution()
+
+  def apply(self) -> None:
     self.__go_to_query()
     while not self.__indeed_job_listings_page.is_present():
       logging.debug("Waiting for Job Listings page to appear...")

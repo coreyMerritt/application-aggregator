@@ -87,12 +87,16 @@ class IndeedJobListingsPage:
         continue
       brief_job_listing.print()
       if not brief_job_listing.passes_filter_check(self.__universal_config, self.__quick_settings):
-        self.__add_brief_job_listing_to_db(brief_job_listing)
+        temp_job_listing = IndeedJobListing(brief_job_listing)
+        self.__add_job_listing_to_db(temp_job_listing)
+        self.__add_application_to_db(temp_job_listing)
         continue
       if brief_job_listing.to_minimal_dict() in self.__jobs_applied_to_this_session:
         logging.info("Ignoring Job Listing because: we've already applied this session.\n")
         continue
-      self.__add_brief_job_listing_to_db(brief_job_listing)
+      temp_job_listing = IndeedJobListing(brief_job_listing)
+      self.__add_job_listing_to_db(temp_job_listing)
+      self.__add_application_to_db(temp_job_listing)
       self.__open_job_in_new_tab(job_listing_li)
       try:
         self.__wait_for_new_job_tab_to_load()
@@ -106,6 +110,7 @@ class IndeedJobListingsPage:
         self.__driver.close()
         self.__driver.switch_to.window(self.__driver.window_handles[0])
         self.__add_job_listing_to_db(job_listing)
+        self.__add_application_to_db(job_listing)
         continue
       while not self.__is_apply_now_span() and not self.__is_apply_on_company_site_span():
         logging.debug("Waiting for apply button...")
@@ -118,6 +123,7 @@ class IndeedJobListingsPage:
       self.__apply_to_job(brief_job_listing)
       self.__driver.switch_to.window(self.__driver.window_handles[0])
       self.__add_job_listing_to_db(job_listing)
+      self.__add_application_to_db(job_listing)
       self.__handle_potential_overload()
 
   def __build_brief_job_listing(self, job_listing_li: WebElement) -> Optional[IndeedBriefJobListing]:
@@ -343,15 +349,14 @@ class IndeedJobListingsPage:
     except TimeoutException:
       logging.warning("Timed out waiting for company website. Proceeding anyway...")
 
-  def __add_brief_job_listing_to_db(self, brief_job_listing: IndeedBriefJobListing) -> None:
-    self.__database_manager.create_new_brief_job_listing(
-      self.__universal_config,
-      brief_job_listing,
+  def __add_job_listing_to_db(self, job_listing: IndeedJobListing) -> None:
+    self.__database_manager.create_new_job_listing(
+      job_listing,
       Platform.INDEED
     )
 
-  def __add_job_listing_to_db(self, job_listing: IndeedJobListing) -> None:
-    self.__database_manager.create_new_job_listing(
+  def __add_application_to_db(self, job_listing: IndeedJobListing) -> None:
+    self.__database_manager.create_new_application(
       self.__universal_config,
       job_listing,
       Platform.INDEED
